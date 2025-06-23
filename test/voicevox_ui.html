@@ -335,26 +335,16 @@
 
                 console.log('AudioQuery generated for speaker:', queryData.speaker_id);
 
-                // パラメータを調整（両方の形式で設定）
+                // パラメータを調整（スネークケース形式のみ使用）
                 const audioQuery = queryData.audio_query;
                 
-                // スネークケース形式
+                // スネークケース形式のみ設定
                 audioQuery.speed_scale = speed;
                 audioQuery.pitch_scale = pitch;
                 
-                // キャメルケース形式（念のため）
-                audioQuery.speedScale = speed;
-                audioQuery.pitchScale = pitch;
-                
-                console.log('Modified AudioQuery parameters:', { 
-                    snake_case: {
-                        speed_scale: audioQuery.speed_scale,
-                        pitch_scale: audioQuery.pitch_scale
-                    },
-                    camel_case: {
-                        speedScale: audioQuery.speedScale,
-                        pitchScale: audioQuery.pitchScale
-                    }
+                console.log('Modified AudioQuery parameters (snake_case only):', { 
+                    speed_scale: audioQuery.speed_scale,
+                    pitch_scale: audioQuery.pitch_scale
                 });
 
                 // 音声合成（重要：AudioQueryと同じspeaker_idを使用）

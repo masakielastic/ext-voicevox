@@ -241,30 +241,30 @@ switch ($uri) {
                 send_error_response('AudioQuery JSON decode failed');
             }
             
-            // AudioQueryのデフォルト値を設定（nullの場合）
-            if (!isset($query_data['speedScale']) || $query_data['speedScale'] === null) {
-                $query_data['speedScale'] = 1.0;
+            // AudioQueryのデフォルト値を設定（スネークケース形式のみ）
+            if (!isset($query_data['speed_scale']) || $query_data['speed_scale'] === null) {
+                $query_data['speed_scale'] = 1.0;
             }
-            if (!isset($query_data['pitchScale']) || $query_data['pitchScale'] === null) {
-                $query_data['pitchScale'] = 0.0;
+            if (!isset($query_data['pitch_scale']) || $query_data['pitch_scale'] === null) {
+                $query_data['pitch_scale'] = 0.0;
             }
-            if (!isset($query_data['intonationScale']) || $query_data['intonationScale'] === null) {
-                $query_data['intonationScale'] = 1.0;
+            if (!isset($query_data['intonation_scale']) || $query_data['intonation_scale'] === null) {
+                $query_data['intonation_scale'] = 1.0;
             }
-            if (!isset($query_data['volumeScale']) || $query_data['volumeScale'] === null) {
-                $query_data['volumeScale'] = 1.0;
+            if (!isset($query_data['volume_scale']) || $query_data['volume_scale'] === null) {
+                $query_data['volume_scale'] = 1.0;
             }
-            if (!isset($query_data['prePhonemeLength']) || $query_data['prePhonemeLength'] === null) {
-                $query_data['prePhonemeLength'] = 0.1;
+            if (!isset($query_data['pre_phoneme_length']) || $query_data['pre_phoneme_length'] === null) {
+                $query_data['pre_phoneme_length'] = 0.1;
             }
-            if (!isset($query_data['postPhonemeLength']) || $query_data['postPhonemeLength'] === null) {
-                $query_data['postPhonemeLength'] = 0.1;
+            if (!isset($query_data['post_phoneme_length']) || $query_data['post_phoneme_length'] === null) {
+                $query_data['post_phoneme_length'] = 0.1;
             }
-            if (!isset($query_data['outputSamplingRate']) || $query_data['outputSamplingRate'] === null) {
-                $query_data['outputSamplingRate'] = 24000;
+            if (!isset($query_data['output_sampling_rate']) || $query_data['output_sampling_rate'] === null) {
+                $query_data['output_sampling_rate'] = 24000;
             }
-            if (!isset($query_data['outputStereo']) || $query_data['outputStereo'] === null) {
-                $query_data['outputStereo'] = false;
+            if (!isset($query_data['output_stereo']) || $query_data['output_stereo'] === null) {
+                $query_data['output_stereo'] = false;
             }
             
             error_log("AudioQuery processed successfully for speaker $speaker_id");
