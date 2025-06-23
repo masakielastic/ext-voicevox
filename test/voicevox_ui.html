@@ -196,20 +196,7 @@
         <div class="form-group">
             <label for="speaker">🎭 話者:</label>
             <select id="speaker">
-                <option value="0">四国めたん（ノーマル）</option>
-                <option value="2">四国めたん（あまあま）</option>
-                <option value="4">四国めたん（ツンツン）</option>
-                <option value="6">四国めたん（セクシー）</option>
-                <option value="1">ずんだもん（ノーマル）</option>
-                <option value="3" selected>ずんだもん（あまあま）</option>
-                <option value="5">ずんだもん（ツンツン）</option>
-                <option value="7">ずんだもん（セクシー）</option>
-                <option value="8">春日部つむぎ（ノーマル）</option>
-                <option value="10">雨晴はう（ノーマル）</option>
-                <option value="11">波音リツ（ノーマル）</option>
-                <option value="13">玄野武宏（ノーマル）</option>
-                <option value="14">白上虎太郎（ノーマル）</option>
-                <option value="16">青山龍星（ノーマル）</option>
+                <option value="">読み込み中...</option>
             </select>
         </div>
         
@@ -419,15 +406,60 @@
             }
         }
 
-        // ページ読み込み時にサーバー状態確認
+        // 話者一覧を動的に読み込む
+        async function loadSpeakers() {
+            try {
+                const response = await fetch(`${API_BASE}/speakers`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const speakerSelect = document.getElementById('speaker');
+                    speakerSelect.innerHTML = ''; // 既存のオプションをクリア
+                    
+                    data.speakers.forEach(speaker => {
+                        const option = document.createElement('option');
+                        option.value = speaker.id;
+                        option.textContent = speaker.display_name;
+                        
+                        // デフォルト選択（ずんだもんのノーマル）
+                        if (speaker.id === 3) {
+                            option.selected = true;
+                        }
+                        
+                        speakerSelect.appendChild(option);
+                    });
+                    
+                    console.log(`Loaded ${data.speakers.length} speakers`);
+                } else {
+                    throw new Error(data.error || 'Failed to load speakers');
+                }
+            } catch (error) {
+                console.error('Failed to load speakers:', error);
+                showStatus('❌ 話者一覧の読み込みに失敗しました', 'error');
+                
+                // フォールバック: 基本的な話者のみ表示
+                const speakerSelect = document.getElementById('speaker');
+                speakerSelect.innerHTML = `
+                    <option value="0">四国めたん（あまあま）</option>
+                    <option value="1">ずんだもん（あまあま）</option>
+                    <option value="2">四国めたん（ノーマル）</option>
+                    <option value="3" selected>ずんだもん（ノーマル）</option>
+                `;
+            }
+        }
+
+        // ページ読み込み時にサーバー状態確認と話者読み込み
         window.addEventListener('load', async function() {
             try {
                 const response = await fetch(`${API_BASE}/status`);
                 const data = await response.json();
                 
                 document.getElementById('serverVersion').textContent = `v${data.version}`;
-                
                 showStatus(`🚀 サーバー接続OK (VOICEVOX ${data.version})`, 'success');
+                
+                // 話者一覧を読み込み
+                await loadSpeakers();
+                
             } catch (error) {
                 showStatus('❌ サーバーに接続できません。localhost:8080でサーバーが起動していることを確認してください。', 'error');
             }

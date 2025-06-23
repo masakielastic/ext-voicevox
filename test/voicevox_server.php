@@ -143,11 +143,66 @@ switch ($uri) {
             'timestamp' => date('Y-m-d H:i:s'),
             'endpoints' => [
                 'GET /status' => 'Service status',
+                'GET /speakers' => 'Get available speakers',
                 'POST /tts' => 'Text-to-Speech',
                 'POST /audio_query' => 'Generate audio query',
                 'POST /synthesis' => 'Synthesize from audio query'
             ]
         ]);
+        break;
+        
+    case '/speakers':
+        // 話者一覧API
+        if ($method !== 'GET') {
+            send_error_response('GET method required');
+        }
+        
+        $metas_file = __DIR__ . '/metas.json';
+        if (!file_exists($metas_file)) {
+            send_error_response('metas.json not found', 404);
+        }
+        
+        try {
+            $metas_content = file_get_contents($metas_file);
+            $metas_data = json_decode($metas_content, true);
+            
+            if ($metas_data === null) {
+                send_error_response('Invalid metas.json format', 500);
+            }
+            
+            // 話者データを整理
+            $speakers = [];
+            foreach ($metas_data as $speaker) {
+                $speaker_name = $speaker['name'];
+                foreach ($speaker['styles'] as $style) {
+                    // frame_decodeとsingタイプは除外（通常の音声合成では使用しない）
+                    if (!isset($style['type']) || $style['type'] === null) {
+                        $speakers[] = [
+                            'id' => $style['id'],
+                            'name' => $speaker_name,
+                            'style' => $style['name'],
+                            'display_name' => $speaker_name . '（' . $style['name'] . '）',
+                            'speaker_uuid' => $speaker['speaker_uuid'] ?? null
+                        ];
+                    }
+                }
+            }
+            
+            // IDでソート
+            usort($speakers, function($a, $b) {
+                return $a['id'] - $b['id'];
+            });
+            
+            send_json_response([
+                'status' => 'success',
+                'speakers' => $speakers,
+                'total_count' => count($speakers)
+            ]);
+            
+        } catch (Exception $e) {
+            error_log('Speakers API Error: ' . $e->getMessage());
+            send_error_response('Failed to load speakers data: ' . $e->getMessage(), 500);
+        }
         break;
         
     case '/tts':
