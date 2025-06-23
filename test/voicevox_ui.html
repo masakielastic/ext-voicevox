@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOICEVOX Web Interface</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label { 
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        textarea { 
+            width: 100%; 
+            height: 120px; 
+            margin: 10px 0;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+        }
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 10px 0;
+        }
+        .slider-group label {
+            margin: 0;
+            min-width: 60px;
+        }
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #e1e5e9;
+            outline: none;
+        }
+        .value-display {
+            min-width: 50px;
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        button { 
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 50px;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .status { 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        .success { 
+            background-color: #d4edda; 
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .error { 
+            background-color: #f8d7da; 
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .loading { 
+            background-color: #d1ecf1; 
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        .info {
+            background-color: #e2e3e5;
+            color: #383d41;
+            border-left: 4px solid #6c757d;
+        }
+        audio { 
+            width: 100%; 
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 VOICEVOX Web Interface</h1>
+        
+        <div class="form-group">
+            <label for="text">📝 読み上げテキスト:</label>
+            <textarea id="text" placeholder="ここに読み上げたいテキストを入力してください&#10;例：こんにちは、VOICEVOX APIサーバーです！"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="speaker">🎭 話者:</label>
+            <select id="speaker">
+                <option value="0">四国めたん（ノーマル）</option>
+                <option value="2">四国めたん（あまあま）</option>
+                <option value="4">四国めたん（ツンツン）</option>
+                <option value="6">四国めたん（セクシー）</option>
+                <option value="1">ずんだもん（ノーマル）</option>
+                <option value="3" selected>ずんだもん（あまあま）</option>
+                <option value="5">ずんだもん（ツンツン）</option>
+                <option value="7">ずんだもん（セクシー）</option>
+                <option value="8">春日部つむぎ（ノーマル）</option>
+                <option value="10">雨晴はう（ノーマル）</option>
+                <option value="11">波音リツ（ノーマル）</option>
+                <option value="13">玄野武宏（ノーマル）</option>
+                <option value="14">白上虎太郎（ノーマル）</option>
+                <option value="16">青山龍星（ノーマル）</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <div class="slider-group">
+                <label>⚡ 速度:</label>
+                <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1">
+                <span class="value-display" id="speedValue">1.0</span>
+            </div>
+            
+            <div class="slider-group">
+                <label>🎵 ピッチ:</label>
+                <input type="range" id="pitch" min="-0.15" max="0.15" step="0.01" value="0">
+                <span class="value-display" id="pitchValue">0.0</span>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-primary" onclick="generateSpeech()">
+                🔊 音声生成・再生
+            </button>
+            <button class="btn-secondary" onclick="downloadSpeech()">
+                💾 WAVダウンロード
+            </button>
+        </div>
+        
+        <div id="status"></div>
+        
+        <audio id="audio" controls style="display: none;"></audio>
+        
+        <div id="stats" class="stats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-number" id="fileSize">-</div>
+                <div class="stat-label">ファイルサイズ</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="generationTime">-</div>
+                <div class="stat-label">生成時間</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="serverVersion">-</div>
+                <div class="stat-label">サーバーバージョン</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        let currentAudioData = null;
+
+        // スライダー値の表示更新
+        document.getElementById('speed').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value;
+        });
+        
+        document.getElementById('pitch').addEventListener('input', function() {
+            document.getElementById('pitchValue').textContent = this.value;
+        });
+
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function updateStats(data) {
+            const statsDiv = document.getElementById('stats');
+            const sizeElement = document.getElementById('fileSize');
+            const timeElement = document.getElementById('generationTime');
+            
+            if (data.size) {
+                sizeElement.textContent = formatBytes(data.size);
+            }
+            if (data.synthesis_time || data.generation_time) {
+                timeElement.textContent = (data.synthesis_time || data.generation_time).toFixed(2) + 's';
+            }
+            
+            statsDiv.style.display = 'grid';
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        async function generateSpeech() {
+            const text = document.getElementById('text').value.trim();
+            const speakerId = parseInt(document.getElementById('speaker').value);
+            const speed = parseFloat(document.getElementById('speed').value);
+            const pitch = parseFloat(document.getElementById('pitch').value);
+            
+            if (!text) {
+                showStatus('📝 テキストを入力してください', 'error');
+                return;
+            }
+
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => btn.disabled = true);
+
+            showStatus('🔄 音声を生成中...', 'loading');
+
+            try {
+                console.log(`Generating speech with Speaker ID: ${speakerId}, Speed: ${speed}, Pitch: ${pitch}`);
+                
+                // AudioQueryを生成（重要：同じspeaker_idを使用）
+                const queryResponse = await fetch(`${API_BASE}/audio_query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        speaker_id: speakerId  // 重要：指定されたspeaker_idを使用
+                    })
+                });
+
+                const queryData = await queryResponse.json();
+                
+                if (queryData.status !== 'success') {
+                    throw new Error(queryData.error);
+                }
+
+                console.log('AudioQuery generated for speaker:', queryData.speaker_id);
+
+                // パラメータを調整（両方の形式で設定）
+                const audioQuery = queryData.audio_query;
+                
+                // スネークケース形式
+                audioQuery.speed_scale = speed;
+                audioQuery.pitch_scale = pitch;
+                
+                // キャメルケース形式（念のため）
+                audioQuery.speedScale = speed;
+                audioQuery.pitchScale = pitch;
+                
+                console.log('Modified AudioQuery parameters:', { 
+                    snake_case: {
+                        speed_scale: audioQuery.speed_scale,
+                        pitch_scale: audioQuery.pitch_scale
+                    },
+                    camel_case: {
+                        speedScale: audioQuery.speedScale,
+                        pitchScale: audioQuery.pitchScale
+                    }
+                });
+
+                // 音声合成（重要：AudioQueryと同じspeaker_idを使用）
+                const synthesisResponse = await fetch(`${API_BASE}/synthesis`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        audio_query: audioQuery,
+                        speaker_id: speakerId,  // 重要：同じspeaker_idを使用
+                        format: 'base64'
+                    })
+                });
+
+                const synthesisData = await synthesisResponse.json();
+                
+                if (synthesisData.status !== 'success') {
+                    throw new Error(synthesisData.error);
+                }
+
+                console.log('Synthesis completed for speaker:', synthesisData.speaker_id);
+
+                // 音声再生
+                currentAudioData = synthesisData.audio_data;
+                const audioUrl = `data:audio/wav;base64,${currentAudioData}`;
+                const audioElement = document.getElementById('audio');
+                audioElement.src = audioUrl;
+                audioElement.style.display = 'block';
+                audioElement.play();
+
+                // 統計情報更新
+                updateStats(synthesisData);
+
+                showStatus(`✅ 音声生成完了！（話者ID: ${speakerId}, 速度: ${speed}x, ピッチ: ${pitch > 0 ? '+' : ''}${pitch}）`, 'success');
+
+            } catch (error) {
+                showStatus(`❌ エラー: ${error.message}`, 'error');
+                console.error('Speech generation error:', error);
+            } finally {
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        async function downloadSpeech() {
+            if (!currentAudioData) {
+                showStatus('⚠️ まず音声を生成してください', 'error');
+                return;
+            }
+
+            try {
+                // Base64をBlobに変換
+                const byteCharacters = atob(currentAudioData);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'audio/wav' });
+
+                // ダウンロード
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `voicevox_${Date.now()}.wav`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                showStatus('💾 ダウンロード開始', 'success');
+            } catch (error) {
+                showStatus(`❌ ダウンロードエラー: ${error.message}`, 'error');
+            }
+        }
+
+        // ページ読み込み時にサーバー状態確認
+        window.addEventListener('load', async function() {
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                const data = await response.json();
+                
+                document.getElementById('serverVersion').textContent = `v${data.version}`;
+                
+                showStatus(`🚀 サーバー接続OK (VOICEVOX ${data.version})`, 'success');
+            } catch (error) {
+                showStatus('❌ サーバーに接続できません。localhost:8080でサーバーが起動していることを確認してください。', 'error');
+            }
+        });
+
+        // エンターキーでの音声生成
+        document.getElementById('text').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                generateSpeech();
+            }
+        });
+    </script>
+</body>
+</html>
