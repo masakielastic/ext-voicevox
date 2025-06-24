@@ -67,10 +67,14 @@
             align-items: center;
             gap: 15px;
             margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
         }
         .slider-group label {
             margin: 0;
-            min-width: 60px;
+            min-width: 80px;
+            font-size: 0.9em;
         }
         input[type="range"] {
             flex: 1;
@@ -78,12 +82,37 @@
             border-radius: 3px;
             background: #e1e5e9;
             outline: none;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .value-display {
-            min-width: 50px;
+            min-width: 70px;
             text-align: center;
             font-weight: 600;
             color: #667eea;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #e1e5e9;
+            font-size: 0.9em;
         }
         .button-group {
             display: flex;
@@ -113,8 +142,12 @@
             background: #6c757d;
             color: white;
         }
-        .btn-secondary:hover {
-            background: #5a6268;
+        .btn-reset {
+            background: #28a745;
+            color: white;
+        }
+        .btn-reset:hover {
+            background: #218838;
         }
         button:disabled {
             opacity: 0.6;
@@ -179,7 +212,19 @@
                 padding: 20px;
             }
             .button-group {
+                grid-template-columns: 1fr;
+            }
+            .slider-group {
                 flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .slider-group label {
+                min-width: auto;
+                text-align: center;
+            }
+            .value-display {
+                text-align: center;
             }
         }
     </style>
@@ -212,6 +257,24 @@
                 <input type="range" id="pitch" min="-0.15" max="0.15" step="0.01" value="0">
                 <span class="value-display" id="pitchValue">0.0</span>
             </div>
+            
+            <div class="slider-group">
+                <label>🔊 音量:</label>
+                <input type="range" id="volume" min="0.5" max="2" step="0.1" value="1">
+                <span class="value-display" id="volumeValue">1.0</span>
+            </div>
+            
+            <div class="slider-group">
+                <label>⏸️ 前無音:</label>
+                <input type="range" id="preSilence" min="0" max="1" step="0.01" value="0.1">
+                <span class="value-display" id="preSilenceValue">0.10s</span>
+            </div>
+            
+            <div class="slider-group">
+                <label>⏸️ 後無音:</label>
+                <input type="range" id="postSilence" min="0" max="1" step="0.01" value="0.1">
+                <span class="value-display" id="postSilenceValue">0.10s</span>
+            </div>
         </div>
         
         <div class="button-group">
@@ -220,6 +283,9 @@
             </button>
             <button class="btn-secondary" onclick="downloadSpeech()">
                 💾 WAVダウンロード
+            </button>
+            <button class="btn-reset" onclick="resetParameters()">
+                🔄 パラメータリセット
             </button>
         </div>
         
@@ -247,6 +313,42 @@
         const API_BASE = 'http://localhost:8080';
         let currentAudioData = null;
 
+        // パラメータの初期値定義
+        const DEFAULT_PARAMETERS = {
+            speed: 1.0,
+            pitch: 0.0,
+            volume: 1.0,
+            preSilence: 0.1,
+            postSilence: 0.1
+        };
+
+        // パラメータをリセットする関数
+        function resetParameters() {
+            // スライダーの値をリセット
+            document.getElementById('speed').value = DEFAULT_PARAMETERS.speed;
+            document.getElementById('pitch').value = DEFAULT_PARAMETERS.pitch;
+            document.getElementById('volume').value = DEFAULT_PARAMETERS.volume;
+            document.getElementById('preSilence').value = DEFAULT_PARAMETERS.preSilence;
+            document.getElementById('postSilence').value = DEFAULT_PARAMETERS.postSilence;
+            
+            // 表示値も更新
+            updateParameterDisplays();
+            
+            // 完了メッセージ
+            showStatus('🔄 パラメータを初期値にリセットしました', 'success');
+            
+            console.log('Parameters reset to defaults:', DEFAULT_PARAMETERS);
+        }
+
+        // パラメータ表示値を更新する関数
+        function updateParameterDisplays() {
+            document.getElementById('speedValue').textContent = document.getElementById('speed').value;
+            document.getElementById('pitchValue').textContent = document.getElementById('pitch').value;
+            document.getElementById('volumeValue').textContent = document.getElementById('volume').value;
+            document.getElementById('preSilenceValue').textContent = parseFloat(document.getElementById('preSilence').value).toFixed(2) + 's';
+            document.getElementById('postSilenceValue').textContent = parseFloat(document.getElementById('postSilence').value).toFixed(2) + 's';
+        }
+
         // スライダー値の表示更新
         document.getElementById('speed').addEventListener('input', function() {
             document.getElementById('speedValue').textContent = this.value;
@@ -254,6 +356,49 @@
         
         document.getElementById('pitch').addEventListener('input', function() {
             document.getElementById('pitchValue').textContent = this.value;
+        });
+        
+        document.getElementById('volume').addEventListener('input', function() {
+            document.getElementById('volumeValue').textContent = this.value;
+        });
+        
+        document.getElementById('preSilence').addEventListener('input', function() {
+            document.getElementById('preSilenceValue').textContent = parseFloat(this.value).toFixed(2) + 's';
+        });
+        
+        document.getElementById('postSilence').addEventListener('input', function() {
+            document.getElementById('postSilenceValue').textContent = parseFloat(this.value).toFixed(2) + 's';
+        });
+
+        // ダブルクリックでパラメータリセット（各スライダー個別）
+        document.getElementById('speed').addEventListener('dblclick', function() {
+            this.value = DEFAULT_PARAMETERS.speed;
+            document.getElementById('speedValue').textContent = this.value;
+            showStatus('⚡ 速度をリセットしました', 'info');
+        });
+        
+        document.getElementById('pitch').addEventListener('dblclick', function() {
+            this.value = DEFAULT_PARAMETERS.pitch;
+            document.getElementById('pitchValue').textContent = this.value;
+            showStatus('🎵 ピッチをリセットしました', 'info');
+        });
+        
+        document.getElementById('volume').addEventListener('dblclick', function() {
+            this.value = DEFAULT_PARAMETERS.volume;
+            document.getElementById('volumeValue').textContent = this.value;
+            showStatus('🔊 音量をリセットしました', 'info');
+        });
+        
+        document.getElementById('preSilence').addEventListener('dblclick', function() {
+            this.value = DEFAULT_PARAMETERS.preSilence;
+            document.getElementById('preSilenceValue').textContent = parseFloat(this.value).toFixed(2) + 's';
+            showStatus('⏸️ 前無音をリセットしました', 'info');
+        });
+        
+        document.getElementById('postSilence').addEventListener('dblclick', function() {
+            this.value = DEFAULT_PARAMETERS.postSilence;
+            document.getElementById('postSilenceValue').textContent = parseFloat(this.value).toFixed(2) + 's';
+            showStatus('⏸️ 後無音をリセットしました', 'info');
         });
 
         function showStatus(message, type = 'info') {
@@ -290,6 +435,9 @@
             const speakerId = parseInt(document.getElementById('speaker').value);
             const speed = parseFloat(document.getElementById('speed').value);
             const pitch = parseFloat(document.getElementById('pitch').value);
+            const volume = parseFloat(document.getElementById('volume').value);
+            const preSilence = parseFloat(document.getElementById('preSilence').value);
+            const postSilence = parseFloat(document.getElementById('postSilence').value);
             
             if (!text) {
                 showStatus('📝 テキストを入力してください', 'error');
@@ -302,7 +450,9 @@
             showStatus('🔄 音声を生成中...', 'loading');
 
             try {
-                console.log(`Generating speech with Speaker ID: ${speakerId}, Speed: ${speed}, Pitch: ${pitch}`);
+                console.log(`Generating speech with parameters:`, {
+                    speakerId, speed, pitch, volume, preSilence, postSilence
+                });
                 
                 // AudioQueryを生成（重要：同じspeaker_idを使用）
                 const queryResponse = await fetch(`${API_BASE}/audio_query`, {
@@ -328,10 +478,16 @@
                 // スネークケース形式のみ設定
                 audioQuery.speed_scale = speed;
                 audioQuery.pitch_scale = pitch;
+                audioQuery.volume_scale = volume;
+                audioQuery.pre_phoneme_length = preSilence;
+                audioQuery.post_phoneme_length = postSilence;
                 
                 console.log('Modified AudioQuery parameters (snake_case only):', { 
                     speed_scale: audioQuery.speed_scale,
-                    pitch_scale: audioQuery.pitch_scale
+                    pitch_scale: audioQuery.pitch_scale,
+                    volume_scale: audioQuery.volume_scale,
+                    pre_phoneme_length: audioQuery.pre_phoneme_length,
+                    post_phoneme_length: audioQuery.post_phoneme_length
                 });
 
                 // 音声合成（重要：AudioQueryと同じspeaker_idを使用）
@@ -364,7 +520,17 @@
                 // 統計情報更新
                 updateStats(synthesisData);
 
-                showStatus(`✅ 音声生成完了！（話者ID: ${speakerId}, 速度: ${speed}x, ピッチ: ${pitch > 0 ? '+' : ''}${pitch}）`, 'success');
+                // パラメータ表示を改善
+                const paramText = [
+                    `話者ID: ${speakerId}`,
+                    `速度: ${speed}x`,
+                    `ピッチ: ${pitch > 0 ? '+' : ''}${pitch}`,
+                    `音量: ${volume}x`,
+                    `前無音: ${preSilence}s`,
+                    `後無音: ${postSilence}s`
+                ].join(', ');
+                
+                showStatus(`✅ 音声生成完了！（${paramText}）`, 'success');
 
             } catch (error) {
                 showStatus(`❌ エラー: ${error.message}`, 'error');
