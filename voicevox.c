@@ -399,6 +399,9 @@ PHP_MINIT_FUNCTION(voicevox)
     voicevox_shutdown_called = false;
     atexit_registered = false;
 
+    // OOP クラス初期化
+    voicevox_oop_init(INIT_FUNC_ARGS_PASSTHRU);
+
     return SUCCESS;
 }
 

@@ -1,13 +1,13 @@
-srcdir = $(or $(SRCDIR), /home/masakielastic/projects/ext-voicevox)
-builddir = $(or $(BUILDDIR), /home/masakielastic/projects/ext-voicevox)
-top_srcdir = $(or $(TOP_SRCDIR), /home/masakielastic/projects/ext-voicevox)  
-top_builddir = $(or $(TOP_BUILDDIR), /home/masakielastic/projects/ext-voicevox)
+srcdir = /home/masakielastic/projects/ext-voicevox
+builddir = /home/masakielastic/projects/ext-voicevox
+top_srcdir = /home/masakielastic/projects/ext-voicevox
+top_builddir = /home/masakielastic/projects/ext-voicevox
 EGREP = /usr/bin/grep -E
 SED = /usr/bin/sed
 AWK = nawk
 SHLIB_SUFFIX_NAME = so
 SHLIB_DL_SUFFIX_NAME = so
-shared_objects_voicevox = voicevox.lo
+shared_objects_voicevox = voicevox.lo voicevox_oop.lo voicevox_compat.lo
 PHP_PECL_EXTENSION = voicevox
 VOICEVOX_SHARED_LIBADD = -ldl
 PHP_MODULES = $(phplibdir)/voicevox.la
@@ -36,7 +36,7 @@ LIBTOOL = $(SHELL) $(top_builddir)/libtool
 SHELL = /bin/bash
 INSTALL_HEADERS =
 BUILD_CC = cc
-phplibdir = $(or $(PHPLIBDIR), ./modules)
+phplibdir = /home/masakielastic/projects/ext-voicevox/modules
 mkinstalldirs = $(top_srcdir)/build/shtool mkdir -p
 INSTALL = $(top_srcdir)/build/shtool install -c
 INSTALL_DATA = $(INSTALL) -m 644
@@ -204,8 +204,14 @@ prof-use:
 
 .PHONY: all clean install distclean test prof-gen prof-clean prof-use
 -include voicevox.dep
-voicevox.lo: $(top_srcdir)/voicevox.c
-	$(LIBTOOL) --tag=CC --mode=compile $(CC) -I. -I$(top_srcdir) $(COMMON_FLAGS) $(CFLAGS_CLEAN) $(EXTRA_CFLAGS)   -DZEND_COMPILE_DL_EXT=1 -c $(top_srcdir)/voicevox.c -o voicevox.lo  -MMD -MF voicevox.dep -MT voicevox.lo
+voicevox.lo: /home/masakielastic/projects/ext-voicevox/voicevox.c
+	$(LIBTOOL) --tag=CC --mode=compile $(CC) -I. -I/home/masakielastic/projects/ext-voicevox $(COMMON_FLAGS) $(CFLAGS_CLEAN) $(EXTRA_CFLAGS)   -DZEND_COMPILE_DL_EXT=1 -c /home/masakielastic/projects/ext-voicevox/voicevox.c -o voicevox.lo  -MMD -MF voicevox.dep -MT voicevox.lo
+-include voicevox_oop.dep
+voicevox_oop.lo: /home/masakielastic/projects/ext-voicevox/voicevox_oop.c
+	$(LIBTOOL) --tag=CC --mode=compile $(CC) -I. -I/home/masakielastic/projects/ext-voicevox $(COMMON_FLAGS) $(CFLAGS_CLEAN) $(EXTRA_CFLAGS)   -DZEND_COMPILE_DL_EXT=1 -c /home/masakielastic/projects/ext-voicevox/voicevox_oop.c -o voicevox_oop.lo  -MMD -MF voicevox_oop.dep -MT voicevox_oop.lo
+-include voicevox_compat.dep
+voicevox_compat.lo: /home/masakielastic/projects/ext-voicevox/voicevox_compat.c
+	$(LIBTOOL) --tag=CC --mode=compile $(CC) -I. -I/home/masakielastic/projects/ext-voicevox $(COMMON_FLAGS) $(CFLAGS_CLEAN) $(EXTRA_CFLAGS)   -DZEND_COMPILE_DL_EXT=1 -c /home/masakielastic/projects/ext-voicevox/voicevox_compat.c -o voicevox_compat.lo  -MMD -MF voicevox_compat.dep -MT voicevox_compat.lo
 $(phplibdir)/voicevox.la: ./voicevox.la
 	$(LIBTOOL) --tag=CC --mode=install cp ./voicevox.la $(phplibdir)
 

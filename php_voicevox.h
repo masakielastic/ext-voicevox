@@ -68,4 +68,7 @@ ZEND_END_MODULE_GLOBALS(voicevox)
 #define VOICEVOX_G(v) (voicevox_globals.v)
 #endif
 
+// OOP support
+#include "php_voicevox_oop.h"
+
 #endif /* PHP_VOICEVOX_H */
