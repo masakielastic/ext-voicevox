@@ -6,7 +6,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VOICEVOX_EXT="$SCRIPT_DIR/modules/voicevox.so"
-SERVER_SCRIPT="$SCRIPT_DIR/test/voicevox_server.php"
+SERVER_SCRIPT="$SCRIPT_DIR/demo/voicevox_server.php"
 PORT=${1:-8080}
 HOST=${2:-localhost}
 
