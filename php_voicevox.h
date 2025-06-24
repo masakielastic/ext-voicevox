@@ -30,6 +30,8 @@ PHP_FUNCTION(voicevox_is_initialized);
 // モジュール関数
 PHP_MINIT_FUNCTION(voicevox);
 PHP_MSHUTDOWN_FUNCTION(voicevox);
+PHP_RINIT_FUNCTION(voicevox);
+PHP_RSHUTDOWN_FUNCTION(voicevox);
 PHP_MINFO_FUNCTION(voicevox);
 
 // VOICEVOX型定義

@@ -1,4 +1,5 @@
-// 最終版VOICEVOX PHP拡張機能（メモリ破損完全解決）
+// 最終版VOICEVOX PHP拡張機能
+// シンプル版（シグナル処理なし、ラッパースクリプトで制御）
 #define COMPILE_DL_VOICEVOX 1
 
 #include "php.h"
@@ -8,6 +9,7 @@
 #include <dlfcn.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 ZEND_DECLARE_MODULE_GLOBALS(voicevox)
 
@@ -21,8 +23,17 @@ static void (*voicevox_wav_free_func)(uint8_t*);
 static void (*voicevox_json_free_func)(char*);
 static const char* (*voicevox_get_version_func)(void);
 
-// 静的フラグ（プロセス終了時の制御）
-static bool voicevox_shutdown_called = false;
+// 静的フラグ
+static volatile bool voicevox_shutdown_called = false;
+static volatile bool atexit_registered = false;
+
+// atexit用のクリーンアップ関数
+static void voicevox_atexit_cleanup(void) {
+    if (VOICEVOX_G(is_initialized) && voicevox_finalize_func && !voicevox_shutdown_called) {
+        voicevox_finalize_func();
+        voicevox_shutdown_called = true;
+    }
+}
 
 // 引数情報の定義
 ZEND_BEGIN_ARG_INFO_EX(arginfo_voicevox_initialize, 0, 0, 1)
@@ -158,6 +169,12 @@ PHP_FUNCTION(voicevox_initialize)
     VoicevoxResultCode result = voicevox_initialize_func(opts);
     if (result == 0) {
         VOICEVOX_G(is_initialized) = true;
+        
+        // atexit関数を一度だけ登録
+        if (!atexit_registered) {
+            atexit(voicevox_atexit_cleanup);
+            atexit_registered = true;
+        }
         
         if (VOICEVOX_G(library_path)) {
             efree(VOICEVOX_G(library_path));
@@ -378,29 +395,25 @@ PHP_MINIT_FUNCTION(voicevox)
     REGISTER_LONG_CONSTANT("VOICEVOX_ACCELERATION_MODE_CPU", 1, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("VOICEVOX_ACCELERATION_MODE_GPU", 2, CONST_CS | CONST_PERSISTENT);
 
-    // シャットダウンフラグ初期化
+    // フラグ初期化
     voicevox_shutdown_called = false;
+    atexit_registered = false;
 
     return SUCCESS;
 }
 
-// モジュール終了（メモリ破損を完全に回避）
+// モジュール終了
 PHP_MSHUTDOWN_FUNCTION(voicevox)
 {
-    // 重複終了処理を防ぐ
-    if (voicevox_shutdown_called) {
-        return SUCCESS;
-    }
-
-    // VOICEVOXが初期化されている場合のみ終了処理
-    if (VOICEVOX_G(is_initialized) && voicevox_finalize_func) {
+    // 安全なクリーンアップ
+    if (VOICEVOX_G(is_initialized) && voicevox_finalize_func && !voicevox_shutdown_called) {
         voicevox_finalize_func();
         voicevox_shutdown_called = true;
     }
     
     VOICEVOX_G(is_initialized) = false;
     
-    // パス文字列のクリーンアップ（安全に）
+    // パス文字列のクリーンアップ
     if (VOICEVOX_G(library_path)) {
         efree(VOICEVOX_G(library_path));
         VOICEVOX_G(library_path) = NULL;
@@ -421,8 +434,7 @@ PHP_MSHUTDOWN_FUNCTION(voicevox)
     voicevox_json_free_func = NULL;
     voicevox_get_version_func = NULL;
     
-    // ライブラリハンドルはプロセス終了時に自動解放される
-    // dlclose()は呼ばない（他のライブラリとの相互作用を避けるため）
+    // ライブラリハンドルは自動解放
     VOICEVOX_G(lib_handle) = NULL;
 
     return SUCCESS;
@@ -435,6 +447,7 @@ PHP_MINFO_FUNCTION(voicevox)
     php_info_print_table_header(2, "VOICEVOX Support", "enabled");
     php_info_print_table_row(2, "Extension Version", PHP_VOICEVOX_VERSION);
     php_info_print_table_row(2, "Status", VOICEVOX_G(is_initialized) ? "initialized" : "not initialized");
+    php_info_print_table_row(2, "Signal Handling", "managed by wrapper script");
     
     if (VOICEVOX_G(library_path)) {
         php_info_print_table_row(2, "Library Path", VOICEVOX_G(library_path));
