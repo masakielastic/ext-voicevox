@@ -164,9 +164,9 @@ PHP_METHOD(VoicevoxEngine, initialize)
     
     // VOICEVOX初期化オプション構築
     VoicevoxInitializeOptions options = {
-        .acceleration_mode = 0, // AUTO
+        .acceleration_mode = 1, // CPU mode (CUDA問題回避)
         .cpu_num_threads = 0,
-        .load_all_models = false,
+        .load_all_models = true,  // すべてのモデルを読み込む
         .open_jtalk_dict_dir = dict_path
     };
     
@@ -234,24 +234,38 @@ PHP_METHOD(VoicevoxEngine, tts)
         RETURN_FALSE;
     }
     
-    zval args[3];
-    zval func_name;
-    zval retval;
-    
-    ZVAL_STRING(&args[0], text);
-    ZVAL_LONG(&args[1], speaker_id);
-    ZVAL_BOOL(&args[2], kana);
-    ZVAL_STRING(&func_name, "voicevox_tts");
-    
-    if (call_user_function(EG(function_table), NULL, &func_name, &retval, 3, args) == SUCCESS) {
-        zval_ptr_dtor(&args[0]);
-        zval_ptr_dtor(&func_name);
-        RETURN_ZVAL(&retval, 1, 1);
+    // VOICEVOXライブラリの直接呼び出し（手続き型API非依存）
+    if (!voicevox_tts_func) {
+        zend_throw_exception(voicevox_exception_ce, "VOICEVOX TTS function not available", 1004);
+        RETURN_FALSE;
     }
     
-    zval_ptr_dtor(&args[0]);
-    zval_ptr_dtor(&func_name);
-    RETURN_FALSE;
+    VoicevoxTtsOptions opts = { .kana = kana };
+    uint8_t* wav_data = NULL;
+    uintptr_t wav_length = 0;
+
+    VoicevoxResultCode result = voicevox_tts_func(text, (uint32_t)speaker_id, opts, &wav_length, &wav_data);
+
+    if (result == 0 && wav_data != NULL && wav_length > 0) {
+        // zend_stringを直接作成（コピーを避ける）
+        zend_string *wav_string = zend_string_alloc(wav_length, 0);
+        memcpy(ZSTR_VAL(wav_string), wav_data, wav_length);
+        ZSTR_VAL(wav_string)[wav_length] = '\0';
+        
+        // VOICEVOXメモリを即座に解放
+        if (voicevox_wav_free_func) {
+            voicevox_wav_free_func(wav_data);
+        }
+        
+        RETURN_STR(wav_string);
+    } else {
+        // 失敗時もメモリを解放
+        if (wav_data && voicevox_wav_free_func) {
+            voicevox_wav_free_func(wav_data);
+        }
+        zend_throw_exception_ex(voicevox_exception_ce, result, "TTS failed with code: %u", result);
+        RETURN_FALSE;
+    }
 }
 
 // Audio Query メソッド
@@ -280,24 +294,33 @@ PHP_METHOD(VoicevoxEngine, audioQuery)
         RETURN_FALSE;
     }
     
-    zval args[3];
-    zval func_name;
-    zval retval;
-    
-    ZVAL_STRING(&args[0], text);
-    ZVAL_LONG(&args[1], speaker_id);
-    ZVAL_BOOL(&args[2], kana);
-    ZVAL_STRING(&func_name, "voicevox_audio_query");
-    
-    if (call_user_function(EG(function_table), NULL, &func_name, &retval, 3, args) == SUCCESS) {
-        zval_ptr_dtor(&args[0]);
-        zval_ptr_dtor(&func_name);
-        RETURN_ZVAL(&retval, 1, 1);
+    // VOICEVOXライブラリの直接呼び出し（手続き型API非依存）
+    if (!voicevox_audio_query_func) {
+        zend_throw_exception(voicevox_exception_ce, "VOICEVOX audio_query function not available", 1004);
+        RETURN_FALSE;
     }
-    
-    zval_ptr_dtor(&args[0]);
-    zval_ptr_dtor(&func_name);
-    RETURN_FALSE;
+
+    VoicevoxAudioQueryOptions opts = { .kana = kana };
+    char* audio_query_json = NULL;
+
+    VoicevoxResultCode result = voicevox_audio_query_func(text, (uint32_t)speaker_id, opts, &audio_query_json);
+
+    if (result == 0 && audio_query_json != NULL) {
+        zend_string *json_string = zend_string_init(audio_query_json, strlen(audio_query_json), 0);
+        
+        // VOICEVOXメモリを即座に解放
+        if (voicevox_json_free_func) {
+            voicevox_json_free_func(audio_query_json);
+        }
+        
+        RETURN_STR(json_string);
+    } else {
+        if (audio_query_json && voicevox_json_free_func) {
+            voicevox_json_free_func(audio_query_json);
+        }
+        zend_throw_exception_ex(voicevox_exception_ce, result, "Audio query failed with code: %u", result);
+        RETURN_FALSE;
+    }
 }
 
 // Synthesis メソッド
@@ -326,24 +349,36 @@ PHP_METHOD(VoicevoxEngine, synthesis)
         RETURN_FALSE;
     }
     
-    zval args[3];
-    zval func_name;
-    zval retval;
-    
-    ZVAL_STRING(&args[0], audio_query);
-    ZVAL_LONG(&args[1], speaker_id);
-    ZVAL_BOOL(&args[2], enable_upspeak);
-    ZVAL_STRING(&func_name, "voicevox_synthesis");
-    
-    if (call_user_function(EG(function_table), NULL, &func_name, &retval, 3, args) == SUCCESS) {
-        zval_ptr_dtor(&args[0]);
-        zval_ptr_dtor(&func_name);
-        RETURN_ZVAL(&retval, 1, 1);
+    // VOICEVOXライブラリの直接呼び出し（手続き型API非依存）
+    if (!voicevox_synthesis_func) {
+        zend_throw_exception(voicevox_exception_ce, "VOICEVOX synthesis function not available", 1004);
+        RETURN_FALSE;
     }
-    
-    zval_ptr_dtor(&args[0]);
-    zval_ptr_dtor(&func_name);
-    RETURN_FALSE;
+
+    VoicevoxSynthesisOptions opts = { .enable_interrogative_upspeak = enable_upspeak };
+    uint8_t* wav_data = NULL;
+    uintptr_t wav_length = 0;
+
+    VoicevoxResultCode result = voicevox_synthesis_func(audio_query, (uint32_t)speaker_id, opts, &wav_length, &wav_data);
+
+    if (result == 0 && wav_data != NULL && wav_length > 0) {
+        zend_string *wav_string = zend_string_alloc(wav_length, 0);
+        memcpy(ZSTR_VAL(wav_string), wav_data, wav_length);
+        ZSTR_VAL(wav_string)[wav_length] = '\0';
+        
+        // VOICEVOXメモリを即座に解放
+        if (voicevox_wav_free_func) {
+            voicevox_wav_free_func(wav_data);
+        }
+        
+        RETURN_STR(wav_string);
+    } else {
+        if (wav_data && voicevox_wav_free_func) {
+            voicevox_wav_free_func(wav_data);
+        }
+        zend_throw_exception_ex(voicevox_exception_ce, result, "Synthesis failed with code: %u", result);
+        RETURN_FALSE;
+    }
 }
 
 // 終了処理メソッド
