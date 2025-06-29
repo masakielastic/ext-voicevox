@@ -10,9 +10,9 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// VOICEVOX設定
-define('VOICEVOX_LIB_PATH', '/home/masakielastic/.voicevox/squashfs-root/vv-engine/libvoicevox_core.so');
-define('VOICEVOX_DICT_PATH', '/home/masakielastic/.voicevox/squashfs-root/vv-engine/pyopenjtalk/open_jtalk_dic_utf_8-1.11');
+// VOICEVOX設定（環境変数またはデフォルト値）
+define('VOICEVOX_LIB_PATH', $_ENV['VOICEVOX_LIB_PATH'] ?? '/home/masakielastic/.voicevox/squashfs-root/vv-engine/libvoicevox_core.so');
+define('VOICEVOX_DICT_PATH', $_ENV['VOICEVOX_DICT_PATH'] ?? '/home/masakielastic/.voicevox/squashfs-root/vv-engine/pyopenjtalk/open_jtalk_dic_utf_8-1.11');
 
 // グローバル初期化状態
 $GLOBALS['voicevox_initialized'] = false;

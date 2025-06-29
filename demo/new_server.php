@@ -13,9 +13,9 @@ ini_set('display_errors', 1);
 use Voicevox\Engine;
 use Voicevox\Exception\VoicevoxException;
 
-// VOICEVOX設定
-define('VOICEVOX_LIB_PATH', '/home/masakielastic/.voicevox/squashfs-root/vv-engine/libvoicevox_core.so');
-define('VOICEVOX_DICT_PATH', '/home/masakielastic/.voicevox/squashfs-root/vv-engine/pyopenjtalk/open_jtalk_dic_utf_8-1.11');
+// VOICEVOX設定（環境変数またはデフォルト値）
+define('VOICEVOX_LIB_PATH', $_ENV['VOICEVOX_LIB_PATH'] ?? '/home/masakielastic/.voicevox/squashfs-root/vv-engine/libvoicevox_core.so');
+define('VOICEVOX_DICT_PATH', $_ENV['VOICEVOX_DICT_PATH'] ?? '/home/masakielastic/.voicevox/squashfs-root/vv-engine/pyopenjtalk/open_jtalk_dic_utf_8-1.11');
 
 // グローバルエンジンインスタンス
 $voicevox_engine = null;
