@@ -8,8 +8,47 @@
  * php -d extension=modules/voicevox.so -S localhost:8080 voicevox_server.php
  */
 
+// API サーバーではエラーをログに記録し、画面表示は無効化
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
+// グローバルエラーハンドラー（HTMLエラーをJSONレスポンスに変換）
+set_error_handler(function($severity, $message, $file, $line) {
+    error_log("PHP Error: $message in $file on line $line");
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Internal server error',
+            'status' => 'error',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'server_type' => 'OOP'
+        ]);
+    }
+    exit;
+});
+
+// グローバル例外ハンドラー（キャッチされない例外をJSONレスポンスに変換）
+set_exception_handler(function($exception) {
+    error_log("Uncaught Exception: " . $exception->getMessage());
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Internal server error',
+            'status' => 'error',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'server_type' => 'OOP'
+        ]);
+    }
+    exit;
+});
+
+// アウトプットバッファリング開始（予期しないHTML出力をキャッチ）
+ob_start();
 
 use Voicevox\Engine;
 use Voicevox\Exception\VoicevoxException;
