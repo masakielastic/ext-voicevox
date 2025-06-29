@@ -160,7 +160,7 @@ PHP_FUNCTION(voicevox_initialize)
     }
 
     VoicevoxInitializeOptions opts = {
-        .acceleration_mode = 0,
+        .acceleration_mode = 1,  // CPU-only mode
         .cpu_num_threads = (uint16_t)cpu_threads,
         .load_all_models = load_all,
         .open_jtalk_dict_dir = dict_path
