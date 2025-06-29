@@ -76,6 +76,17 @@ ls -la "$VOICEVOX_DICT_PATH"
 ls -la "$VOICEVOX_DICT_PATH"/*.dic
 ```
 
+### 依存ライブラリの設定
+
+VOICEVOX Engineは `libonnxruntime.so` に依存しています。環境によっては以下のようにシンボリックリンクの作成が必要です：
+
+```bash
+# libonnxruntime.so.1.13.1 から libonnxruntime.so へのシンボリックリンク作成
+ln -sf libonnxruntime.so.1.13.1 libonnxruntime.so
+```
+
+このシンボリックリンクは、VOICEVOX Engineが `libonnxruntime.so` を参照する際に、実際のライブラリファイル `libonnxruntime.so.1.13.1` にリンクするために必要です。
+
 ## ビルド方法
 
 ### デフォルト設定でビルド
