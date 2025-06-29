@@ -141,6 +141,10 @@ static bool load_voicevox_library(const char* lib_path)
 // PHP関数: voicevox_initialize
 PHP_FUNCTION(voicevox_initialize)
 {
+    // 非推奨警告を発出
+    php_error_docref(NULL, E_DEPRECATED, 
+        "voicevox_initialize() is deprecated, use Voicevox\\Engine::getInstance()->initialize() instead");
+    
     char *lib_path = NULL, *dict_path = NULL;
     size_t lib_path_len = 0, dict_path_len = 0;
     zend_long cpu_threads = 0;
@@ -198,6 +202,9 @@ PHP_FUNCTION(voicevox_initialize)
 // PHP関数: voicevox_finalize
 PHP_FUNCTION(voicevox_finalize)
 {
+    // 非推奨警告を発出
+    php_error_docref(NULL, E_DEPRECATED, 
+        "voicevox_finalize() is deprecated, use Voicevox\\Engine::getInstance()->finalize() instead");
     if (zend_parse_parameters_none() == FAILURE) {
         RETURN_FALSE;
     }
@@ -219,6 +226,9 @@ PHP_FUNCTION(voicevox_finalize)
 // PHP関数: voicevox_get_version
 PHP_FUNCTION(voicevox_get_version)
 {
+    // 非推奨警告を発出
+    php_error_docref(NULL, E_DEPRECATED, 
+        "voicevox_get_version() is deprecated, use Voicevox\\Engine::getInstance()->getVersion() instead");
     if (zend_parse_parameters_none() == FAILURE) {
         RETURN_FALSE;
     }
@@ -239,6 +249,9 @@ PHP_FUNCTION(voicevox_get_version)
 // PHP関数: voicevox_tts
 PHP_FUNCTION(voicevox_tts)
 {
+    // 非推奨警告を発出
+    php_error_docref(NULL, E_DEPRECATED, 
+        "voicevox_tts() is deprecated, use Voicevox\\Engine::getInstance()->tts() instead");
     char *text;
     size_t text_len;
     zend_long speaker_id = 3;
@@ -284,6 +297,9 @@ PHP_FUNCTION(voicevox_tts)
 // PHP関数: voicevox_audio_query
 PHP_FUNCTION(voicevox_audio_query)
 {
+    // 非推奨警告を発出
+    php_error_docref(NULL, E_DEPRECATED, 
+        "voicevox_audio_query() is deprecated, use Voicevox\\Engine::getInstance()->audioQuery() instead");
     char *text;
     size_t text_len;
     zend_long speaker_id = 3;
@@ -329,6 +345,9 @@ PHP_FUNCTION(voicevox_audio_query)
 // PHP関数: voicevox_synthesis
 PHP_FUNCTION(voicevox_synthesis)
 {
+    // 非推奨警告を発出
+    php_error_docref(NULL, E_DEPRECATED, 
+        "voicevox_synthesis() is deprecated, use Voicevox\\Engine::getInstance()->synthesis() instead");
     char *audio_query_json;
     size_t json_len;
     zend_long speaker_id = 3;
@@ -377,6 +396,9 @@ PHP_FUNCTION(voicevox_synthesis)
 // PHP関数: voicevox_is_initialized
 PHP_FUNCTION(voicevox_is_initialized)
 {
+    // 非推奨警告を発出
+    php_error_docref(NULL, E_DEPRECATED, 
+        "voicevox_is_initialized() is deprecated, use Voicevox\\Engine::getInstance()->isInitialized() instead");
     if (zend_parse_parameters_none() == FAILURE) {
         RETURN_FALSE;
     }

@@ -31,22 +31,23 @@ php -d extension=modules/voicevox.so run-tests.php tests/
 
 ### Development Server
 ```bash
-# Start OOP API server
-php -d extension=modules/voicevox.so -S localhost:8080 demo/new_server.php
+# Start OOP API server (RECOMMENDED)
+php -d extension=modules/voicevox.so -S localhost:8080 demo/voicevox_server.php
 
-# Start procedural API server  
-php -d extension=modules/voicevox.so -S localhost:8081 demo/voicevox_server.php
+# Start alternate OOP server
+php -d extension=modules/voicevox.so -S localhost:8081 demo/new_server.php
 ```
 
 ## Architecture
 
-### Dual API Design
-The extension provides two complementary APIs:
+### OOP-First Design
+The extension primarily uses Object-Oriented API with legacy procedural support:
 
-1. **Procedural API** (`voicevox.c`): Core functionality with direct function calls
-   - `voicevox_initialize()`, `voicevox_tts()`, `voicevox_finalize()`, etc.
+1. **Object-Oriented API** (`voicevox_oop.c`): **RECOMMENDED** - Modern, exception-based interface
+   - `\Voicevox\Engine::getInstance()->initialize()`, `->tts()`, `->finalize()`, etc.
+   - Exception handling with `\Voicevox\Exception\VoicevoxException`
    
-2. **Object-Oriented API** (`voicevox_oop.c`): Wrapper around procedural API
+2. **Procedural API** (`voicevox.c`): **DEPRECATED** - Legacy interface for backward compatibility
    - `Voicevox\Engine` class with singleton pattern
    - `Voicevox\Exception\VoicevoxException` for error handling
 
@@ -75,26 +76,44 @@ export VOICEVOX_DICT_PATH="/path/to/open_jtalk_dic_utf_8-1.11"
 
 ### Usage Patterns
 
-#### Simple TTS (One-step)
+#### Object-oriented Usage (RECOMMENDED)
 ```php
+use Voicevox\Engine;
+use Voicevox\Exception\VoicevoxException;
+
+try {
+    $engine = Engine::getInstance();
+    $engine->initialize($lib_path, $dict_path);
+    $wav_data = $engine->tts("Hello World", 3);
+    $engine->finalize();
+} catch (VoicevoxException $e) {
+    echo "VOICEVOX Error: " . $e->getMessage();
+}
+```
+
+#### Advanced TTS with AudioQuery (OOP)
+```php
+try {
+    $engine = Engine::getInstance();
+    $engine->initialize($lib_path, $dict_path);
+    
+    $audio_query = $engine->audioQuery("Hello World", 3);
+    $query_data = json_decode($audio_query, true);
+    $query_data['speed_scale'] = 1.2;  // Modify parameters
+    $wav_data = $engine->synthesis(json_encode($query_data), 3);
+    
+    $engine->finalize();
+} catch (VoicevoxException $e) {
+    echo "VOICEVOX Error: " . $e->getMessage();
+}
+```
+
+#### Procedural Usage (DEPRECATED)
+```php
+// WARNING: These functions are deprecated and will show deprecation warnings
 voicevox_initialize($lib_path, $dict_path);
 $wav_data = voicevox_tts("Hello World", 3);
 voicevox_finalize();
-```
-
-#### Advanced TTS (Two-step with parameter control)
-```php
-$audio_query = voicevox_audio_query("Hello World", 3);
-$query_data = json_decode($audio_query, true);
-$query_data['speedScale'] = 1.2;  // Modify parameters
-$wav_data = voicevox_synthesis(json_encode($query_data), 3);
-```
-
-#### Object-oriented Usage
-```php
-$engine = \Voicevox\Engine::getInstance();
-$engine->initialize($lib_path, $dict_path);
-$wav_data = $engine->tts("Hello World", 3);
 ```
 
 ## Testing Notes

@@ -1,8 +1,9 @@
 <?php
 /**
- * VOICEVOX API Server
- * PHP Built-in Server + VOICEVOX Extension
+ * VOICEVOX API Server (OOP Version)
+ * PHP Built-in Server + VOICEVOX Extension with OOP Interface
  * 
+ * Migration: Converted from procedural to OOP API
  * Usage:
  * php -d extension=modules/voicevox.so -S localhost:8080 voicevox_server.php
  */
@@ -10,18 +11,23 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+use Voicevox\Engine;
+use Voicevox\Exception\VoicevoxException;
+
 // VOICEVOX設定（環境変数またはデフォルト値）
 define('VOICEVOX_LIB_PATH', $_ENV['VOICEVOX_LIB_PATH'] ?? '/home/masakielastic/.voicevox/squashfs-root/vv-engine/libvoicevox_core.so');
 define('VOICEVOX_DICT_PATH', $_ENV['VOICEVOX_DICT_PATH'] ?? '/home/masakielastic/.voicevox/squashfs-root/vv-engine/pyopenjtalk/open_jtalk_dic_utf_8-1.11');
 
-// グローバル初期化状態
-$GLOBALS['voicevox_initialized'] = false;
+// グローバルエンジンインスタンス
+$voicevox_engine = null;
 
 /**
- * VOICEVOX初期化（一度だけ実行）
+ * VOICEVOX Engine初期化（一度だけ実行）
  */
-function initialize_voicevox() {
-    if ($GLOBALS['voicevox_initialized']) {
+function initialize_voicevox_engine() {
+    global $voicevox_engine;
+    
+    if ($voicevox_engine && $voicevox_engine->isInitialized()) {
         return true;
     }
     
@@ -30,24 +36,48 @@ function initialize_voicevox() {
         return false;
     }
     
-    if (voicevox_is_initialized()) {
-        $GLOBALS['voicevox_initialized'] = true;
-        return true;
-    }
-    
-    $start_time = microtime(true);
-    $result = voicevox_initialize(VOICEVOX_LIB_PATH, VOICEVOX_DICT_PATH);
-    $init_time = microtime(true) - $start_time;
-    
-    if ($result) {
-        $GLOBALS['voicevox_initialized'] = true;
-        $version = voicevox_get_version();
-        error_log("VOICEVOX initialized successfully (v{$version}) in " . sprintf('%.2f', $init_time) . " seconds");
-        return true;
-    } else {
-        error_log('VOICEVOX initialization failed');
+    try {
+        $voicevox_engine = Engine::getInstance();
+        
+        if ($voicevox_engine->isInitialized()) {
+            return true;
+        }
+        
+        $start_time = microtime(true);
+        $result = $voicevox_engine->initialize(VOICEVOX_LIB_PATH, VOICEVOX_DICT_PATH);
+        $init_time = microtime(true) - $start_time;
+        
+        if ($result) {
+            $version = $voicevox_engine->getVersion();
+            error_log("VOICEVOX initialized successfully (v{$version}) in " . sprintf('%.2f', $init_time) . " seconds");
+            return true;
+        } else {
+            error_log('VOICEVOX initialization failed');
+            return false;
+        }
+        
+    } catch (VoicevoxException $e) {
+        error_log('VOICEVOX Exception: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')');
+        return false;
+    } catch (Exception $e) {
+        error_log('General Exception: ' . $e->getMessage());
         return false;
     }
+}
+
+/**
+ * VOICEVOXエンジンを取得
+ */
+function get_voicevox_engine() {
+    global $voicevox_engine;
+    
+    if (!$voicevox_engine || !$voicevox_engine->isInitialized()) {
+        if (!initialize_voicevox_engine()) {
+            throw new Exception('VOICEVOX engine not available');
+        }
+    }
+    
+    return $voicevox_engine;
 }
 
 /**
@@ -83,7 +113,8 @@ function send_error_response($message, $status_code = 400) {
     send_json_response([
         'error' => $message,
         'status' => 'error',
-        'timestamp' => date('Y-m-d H:i:s')
+        'timestamp' => date('Y-m-d H:i:s'),
+        'server_type' => 'OOP'
     ], $status_code);
 }
 
@@ -127,8 +158,12 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
 
 // 初期化確認
-if (!initialize_voicevox()) {
-    send_error_response('VOICEVOX initialization failed', 500);
+try {
+    if (!initialize_voicevox_engine()) {
+        send_error_response('VOICEVOX engine initialization failed', 500);
+    }
+} catch (Exception $e) {
+    send_error_response('VOICEVOX engine error: ' . $e->getMessage(), 500);
 }
 
 switch ($uri) {
@@ -147,20 +182,26 @@ switch ($uri) {
         
     case '/status':
         // ステータス確認
-        send_json_response([
-            'status' => 'ok',
-            'service' => 'VOICEVOX API Server',
-            'version' => voicevox_get_version(),
-            'initialized' => voicevox_is_initialized(),
-            'timestamp' => date('Y-m-d H:i:s'),
-            'endpoints' => [
-                'GET /status' => 'Service status',
-                'GET /speakers' => 'Get available speakers',
-                'POST /tts' => 'Text-to-Speech',
-                'POST /audio_query' => 'Generate audio query',
-                'POST /synthesis' => 'Synthesize from audio query'
-            ]
-        ]);
+        try {
+            $engine = get_voicevox_engine();
+            send_json_response([
+                'status' => 'ok',
+                'service' => 'VOICEVOX API Server (OOP)',
+                'version' => $engine->getVersion(),
+                'initialized' => $engine->isInitialized(),
+                'implementation' => 'OOP Interface',
+                'timestamp' => date('Y-m-d H:i:s'),
+                'endpoints' => [
+                    'GET /status' => 'Service status',
+                    'GET /speakers' => 'Get available speakers',
+                    'POST /tts' => 'Text-to-Speech (OOP)',
+                    'POST /audio_query' => 'Generate audio query (OOP)',
+                    'POST /synthesis' => 'Synthesize from audio query (OOP)'
+                ]
+            ]);
+        } catch (Exception $e) {
+            send_error_response('Status check failed: ' . $e->getMessage(), 500);
+        }
         break;
         
     case '/speakers':
@@ -208,7 +249,8 @@ switch ($uri) {
             send_json_response([
                 'status' => 'success',
                 'speakers' => $speakers,
-                'total_count' => count($speakers)
+                'total_count' => count($speakers),
+                'implementation' => 'OOP Interface'
             ]);
             
         } catch (Exception $e) {
@@ -218,7 +260,7 @@ switch ($uri) {
         break;
         
     case '/tts':
-        // Text-to-Speech API
+        // Text-to-Speech API (OOP版)
         if ($method !== 'POST') {
             send_error_response('POST method required');
         }
@@ -244,8 +286,10 @@ switch ($uri) {
         }
         
         try {
+            $engine = get_voicevox_engine();
+            
             $start_time = microtime(true);
-            $wav_data = voicevox_tts($text, (int)$speaker_id, (bool)$kana);
+            $wav_data = $engine->tts($text, (int)$speaker_id, (bool)$kana);
             $tts_time = microtime(true) - $start_time;
             
             if ($wav_data === false) {
@@ -261,14 +305,18 @@ switch ($uri) {
                     'size' => strlen($wav_data),
                     'generation_time' => round($tts_time, 3),
                     'text' => $text,
-                    'speaker_id' => $speaker_id
+                    'speaker_id' => $speaker_id,
+                    'implementation' => 'OOP Interface'
                 ]);
             } else {
                 // WAVファイルとして返す
-                $filename = 'voice_' . md5($text . $speaker_id) . '.wav';
+                $filename = 'voice_oop_' . md5($text . $speaker_id) . '.wav';
                 send_wav_response($wav_data, $filename);
             }
             
+        } catch (VoicevoxException $e) {
+            error_log('VOICEVOX TTS Error: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')');
+            send_error_response('VOICEVOX TTS error: ' . $e->getMessage(), 500);
         } catch (Exception $e) {
             error_log('TTS Error: ' . $e->getMessage());
             send_error_response('TTS processing error: ' . $e->getMessage(), 500);
@@ -276,7 +324,7 @@ switch ($uri) {
         break;
         
     case '/audio_query':
-        // AudioQuery生成API
+        // AudioQuery生成API (OOP版)
         if ($method !== 'POST') {
             send_error_response('POST method required');
         }
@@ -292,8 +340,10 @@ switch ($uri) {
         $kana = $data['kana'] ?? false;
         
         try {
+            $engine = get_voicevox_engine();
+            
             $start_time = microtime(true);
-            $audio_query = voicevox_audio_query($text, (int)$speaker_id, (bool)$kana);
+            $audio_query = $engine->audioQuery($text, (int)$speaker_id, (bool)$kana);
             $query_time = microtime(true) - $start_time;
             
             if ($audio_query === false) {
@@ -334,16 +384,20 @@ switch ($uri) {
                 $query_data['output_stereo'] = false;
             }
             
-            error_log("AudioQuery processed successfully for speaker $speaker_id");
+            error_log("AudioQuery processed successfully for speaker $speaker_id (OOP)");
             
             send_json_response([
                 'status' => 'success',
                 'audio_query' => $query_data,
                 'generation_time' => round($query_time, 3),
                 'text' => $text,
-                'speaker_id' => $speaker_id
+                'speaker_id' => $speaker_id,
+                'implementation' => 'OOP Interface'
             ]);
             
+        } catch (VoicevoxException $e) {
+            error_log('VOICEVOX AudioQuery Error: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')');
+            send_error_response('VOICEVOX AudioQuery error: ' . $e->getMessage(), 500);
         } catch (Exception $e) {
             error_log('AudioQuery Error: ' . $e->getMessage());
             send_error_response('AudioQuery processing error: ' . $e->getMessage(), 500);
@@ -351,7 +405,7 @@ switch ($uri) {
         break;
         
     case '/synthesis':
-        // 音声合成API（AudioQueryから）
+        // 音声合成API（AudioQueryから）(OOP版)
         if ($method !== 'POST') {
             send_error_response('POST method required');
         }
@@ -381,11 +435,13 @@ switch ($uri) {
         $format = $data['format'] ?? 'wav';
         
         // デバッグログ
-        error_log("Synthesis - Speaker ID: $speaker_id, AudioQuery length: " . strlen($audio_query));
+        error_log("Synthesis (OOP) - Speaker ID: $speaker_id, AudioQuery length: " . strlen($audio_query));
         
         try {
+            $engine = get_voicevox_engine();
+            
             $start_time = microtime(true);
-            $wav_data = voicevox_synthesis($audio_query, (int)$speaker_id, (bool)$enable_upspeak);
+            $wav_data = $engine->synthesis($audio_query, (int)$speaker_id, (bool)$enable_upspeak);
             $synthesis_time = microtime(true) - $start_time;
             
             if ($wav_data === false) {
@@ -400,13 +456,17 @@ switch ($uri) {
                     'encoding' => 'base64',
                     'size' => strlen($wav_data),
                     'synthesis_time' => round($synthesis_time, 3),
-                    'speaker_id' => $speaker_id
+                    'speaker_id' => $speaker_id,
+                    'implementation' => 'OOP Interface'
                 ]);
             } else {
-                $filename = 'synthesis_' . time() . '.wav';
+                $filename = 'synthesis_oop_' . time() . '.wav';
                 send_wav_response($wav_data, $filename);
             }
             
+        } catch (VoicevoxException $e) {
+            error_log('VOICEVOX Synthesis Error: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')');
+            send_error_response('VOICEVOX Synthesis error: ' . $e->getMessage(), 500);
         } catch (Exception $e) {
             error_log('Synthesis Error: ' . $e->getMessage());
             send_error_response('Synthesis processing error: ' . $e->getMessage(), 500);

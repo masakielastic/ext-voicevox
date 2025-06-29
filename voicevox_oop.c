@@ -121,8 +121,9 @@ PHP_METHOD(VoicevoxEngine, initialize)
     
     voicevox_engine_object *obj = Z_VOICEVOX_ENGINE_P(ZEND_THIS);
     
-    // テスト互換性: 重複初期化で例外ではなくfalseを返す
+    // 重複初期化をチェックして例外を投げる
     if (obj->is_initialized) {
+        zend_throw_exception(voicevox_exception_ce, "VOICEVOX engine is already initialized", 1001);
         RETURN_FALSE;
     }
     
@@ -211,13 +212,15 @@ PHP_METHOD(VoicevoxEngine, tts)
     
     voicevox_engine_object *obj = Z_VOICEVOX_ENGINE_P(ZEND_THIS);
     
-    // テスト互換性: 未初期化時は例外ではなくfalseを返す
+    // 未初期化時は例外を投げる
     if (!obj->is_initialized) {
+        zend_throw_exception(voicevox_exception_ce, "VOICEVOX engine is not initialized", 1002);
         RETURN_FALSE;
     }
     
-    // テスト互換性: 空文字列チェック
+    // 空文字列チェック
     if (text_len == 0) {
+        zend_throw_exception(voicevox_exception_ce, "Text parameter cannot be empty", 1003);
         RETURN_FALSE;
     }
     
@@ -255,13 +258,15 @@ PHP_METHOD(VoicevoxEngine, audioQuery)
     
     voicevox_engine_object *obj = Z_VOICEVOX_ENGINE_P(ZEND_THIS);
     
-    // テスト互換性: 未初期化時は例外ではなくfalseを返す
+    // 未初期化時は例外を投げる
     if (!obj->is_initialized) {
+        zend_throw_exception(voicevox_exception_ce, "VOICEVOX engine is not initialized", 1002);
         RETURN_FALSE;
     }
     
-    // テスト互換性: 空文字列チェック
+    // 空文字列チェック
     if (text_len == 0) {
+        zend_throw_exception(voicevox_exception_ce, "Text parameter cannot be empty", 1003);
         RETURN_FALSE;
     }
     
@@ -299,13 +304,15 @@ PHP_METHOD(VoicevoxEngine, synthesis)
     
     voicevox_engine_object *obj = Z_VOICEVOX_ENGINE_P(ZEND_THIS);
     
-    // テスト互換性: 未初期化時は例外ではなくfalseを返す
+    // 未初期化時は例外を投げる
     if (!obj->is_initialized) {
+        zend_throw_exception(voicevox_exception_ce, "VOICEVOX engine is not initialized", 1002);
         RETURN_FALSE;
     }
     
-    // テスト互換性: 空AudioQuery文字列チェック
+    // 空AudioQuery文字列チェック
     if (audio_query_len == 0) {
+        zend_throw_exception(voicevox_exception_ce, "AudioQuery parameter cannot be empty", 1004);
         RETURN_FALSE;
     }
     
