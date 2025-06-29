@@ -112,7 +112,7 @@ echo "  POST http://$HOST:$PORT/tts"
 echo "  POST http://$HOST:$PORT/audio_query"
 echo "  POST http://$HOST:$PORT/synthesis"
 echo ""
-echo "Web UI: http://$HOST:$PORT/voicevox_ui.html"
+echo "Web UI: http://$HOST:$PORT/"
 echo ""
 
 # ヘルスチェック

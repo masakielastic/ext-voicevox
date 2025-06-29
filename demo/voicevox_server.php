@@ -133,6 +133,18 @@ if (!initialize_voicevox()) {
 
 switch ($uri) {
     case '/':
+        // Web UI配信
+        $ui_file = __DIR__ . '/voicevox_ui.html';
+        if (file_exists($ui_file)) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Access-Control-Allow-Origin: *');
+            readfile($ui_file);
+            exit;
+        } else {
+            send_error_response('Web UI not found', 404);
+        }
+        break;
+        
     case '/status':
         // ステータス確認
         send_json_response([
