@@ -21,8 +21,8 @@ make test              # Run all tests
 make test
 
 # Run specific tests
-php -d extension=modules/voicevox.so test_enhanced_oop.php
-php -d extension=modules/voicevox.so test_with_env.php
+php -d extension=modules/voicevox.so tests/test_enhanced_oop.php
+php -d extension=modules/voicevox.so tests/test_with_env.php
 ./run_tests.sh                                              # Comprehensive test suite
 
 # Run PHPT tests only
