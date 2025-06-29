@@ -1,6 +1,6 @@
 # VOICEVOX PHP Extension
 
-VOICEVOX音声合成エンジンのPHP拡張機能です。手続き型APIとオブジェクト指向APIの両方をサポートしています。
+VOICEVOX音声合成エンジンのPHP拡張機能です。モダンなオブジェクト指向APIを中心とした設計で、例外処理による堅牢なエラーハンドリングを提供します。従来の手続き型APIも後方互換性のためサポートしていますが、新しい開発にはOOP APIの使用を強く推奨します。
 
 ## 必要な環境
 
@@ -121,7 +121,50 @@ make SRCDIR=/path/to/source \
 
 ### 基本的な使用例
 
-#### 手続き型API（従来方式）
+#### オブジェクト指向API（推奨）
+
+```php
+<?php
+use Voicevox\Engine;
+use Voicevox\Exception\VoicevoxException;
+
+try {
+    // エンジンインスタンス取得（シングルトン）
+    $engine = Engine::getInstance();
+    
+    // 初期化
+    $lib_path = $_ENV['VOICEVOX_LIB_PATH'] ?? '/path/to/libvoicevox_core.so';
+    $dict_path = $_ENV['VOICEVOX_DICT_PATH'] ?? '/path/to/open_jtalk_dic_utf_8-1.11';
+    
+    $engine->initialize($lib_path, $dict_path);
+    
+    // 音声合成
+    $text = "こんにちは、世界！";
+    $speaker_id = 3;
+    $wav_data = $engine->tts($text, $speaker_id);
+    
+    // WAVファイルとして保存
+    file_put_contents('output_oop.wav', $wav_data);
+    echo "音声ファイルを生成しました: output_oop.wav\n";
+    
+    // バージョン情報
+    echo "VOICEVOX Version: " . $engine->getVersion() . "\n";
+    
+    // 終了処理
+    $engine->finalize();
+    
+} catch (VoicevoxException $e) {
+    echo "VOICEVOX Error: " . $e->getMessage() . "\n";
+    echo "Error Code: " . $e->getCode() . "\n";
+} catch (Exception $e) {
+    echo "General Error: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+#### 手続き型API（非推奨 - 後方互換性のみ）
+
+> ⚠️ **警告**: 手続き型APIは非推奨です。使用時に非推奨警告が表示されます。新しい開発では上記のOOP APIを使用してください。
 
 ```php
 <?php
@@ -156,7 +199,8 @@ voicevox_finalize();
 ?>
 ```
 
-#### オブジェクト指向API（新方式）
+
+### 高度な使用例（AudioQuery使用）
 
 ```php
 <?php
@@ -164,74 +208,36 @@ use Voicevox\Engine;
 use Voicevox\Exception\VoicevoxException;
 
 try {
-    // エンジンインスタンス取得（シングルトン）
+    // AudioQueryを使用した詳細制御
     $engine = Engine::getInstance();
-    
-    // 初期化
-    $lib_path = $_ENV['VOICEVOX_LIB_PATH'] ?? '/path/to/libvoicevox_core.so';
-    $dict_path = $_ENV['VOICEVOX_DICT_PATH'] ?? '/path/to/open_jtalk_dic_utf_8-1.11';
-    
-    if (!$engine->initialize($lib_path, $dict_path)) {
-        throw new Exception('Failed to initialize VOICEVOX');
-    }
-    
-    // 音声合成
-    $text = "こんにちは、世界！";
-    $speaker_id = 3;
-    $wav_data = $engine->tts($text, $speaker_id);
-    
-    if ($wav_data !== false) {
-        file_put_contents('output_oop.wav', $wav_data);
-        echo "音声ファイルを生成しました: output_oop.wav\n";
-    } else {
-        echo "音声合成に失敗しました\n";
-    }
-    
-    // バージョン情報
-    echo "VOICEVOX Version: " . $engine->getVersion() . "\n";
-    
-    // 終了処理
+    $engine->initialize($lib_path, $dict_path);
+
+    $text = "音声のピッチを調整します";
+    $speaker_id = 1;
+
+    // 1. AudioQuery生成
+    $audio_query_json = $engine->audioQuery($text, $speaker_id);
+    $audio_query = json_decode($audio_query_json, true);
+
+    // 2. パラメータ調整
+    $audio_query['pitch_scale'] = 1.2;     // ピッチを20%上げる
+    $audio_query['speed_scale'] = 0.9;     // 速度を10%下げる
+    $audio_query['volume_scale'] = 1.1;    // 音量を10%上げる
+
+    // 3. 音声合成実行
+    $modified_query = json_encode($audio_query);
+    $wav_data = $engine->synthesis($modified_query, $speaker_id);
+
+    file_put_contents('modified_voice.wav', $wav_data);
+    echo "調整された音声を生成しました\n";
+
     $engine->finalize();
     
 } catch (VoicevoxException $e) {
     echo "VOICEVOX Error: " . $e->getMessage() . "\n";
-    echo "Error Code: " . $e->getVoicevoxCode() . "\n";
 } catch (Exception $e) {
     echo "General Error: " . $e->getMessage() . "\n";
 }
-?>
-```
-
-### 高度な使用例（AudioQuery使用）
-
-```php
-<?php
-// AudioQueryを使用した詳細制御
-$engine = \Voicevox\Engine::getInstance();
-$engine->initialize($lib_path, $dict_path);
-
-$text = "音声のピッチを調整します";
-$speaker_id = 1;
-
-// 1. AudioQuery生成
-$audio_query_json = $engine->audioQuery($text, $speaker_id);
-$audio_query = json_decode($audio_query_json, true);
-
-// 2. パラメータ調整
-$audio_query['pitch_scale'] = 1.2;     // ピッチを20%上げる
-$audio_query['speed_scale'] = 0.9;     // 速度を10%下げる
-$audio_query['volume_scale'] = 1.1;    // 音量を10%上げる
-
-// 3. 音声合成実行
-$modified_query = json_encode($audio_query);
-$wav_data = $engine->synthesis($modified_query, $speaker_id);
-
-if ($wav_data !== false) {
-    file_put_contents('modified_voice.wav', $wav_data);
-    echo "調整された音声を生成しました\n";
-}
-
-$engine->finalize();
 ?>
 ```
 
@@ -240,11 +246,11 @@ $engine->finalize();
 拡張機能をWebサーバーとして使用することもできます：
 
 ```bash
-# OOP版サーバー起動
-php -d extension=modules/voicevox.so -S localhost:8080 demo/new_server.php
+# OOP版サーバー起動（推奨）
+php -d extension=modules/voicevox.so -S localhost:8080 demo/voicevox_server.php
 
-# 従来版サーバー起動  
-php -d extension=modules/voicevox.so -S localhost:8081 demo/voicevox_server.php
+# 代替OOP版サーバー起動  
+php -d extension=modules/voicevox.so -S localhost:8081 demo/new_server.php
 ```
 
 APIエンドポイント：
@@ -256,19 +262,7 @@ APIエンドポイント：
 
 ## 利用可能な関数・メソッド
 
-### 手続き型関数
-
-| 関数名 | 説明 | 戻り値 |
-|--------|------|--------|
-| `voicevox_initialize($lib_path, $dict_path)` | VOICEVOX初期化 | bool |
-| `voicevox_is_initialized()` | 初期化状態確認 | bool |
-| `voicevox_get_version()` | バージョン取得 | string |
-| `voicevox_tts($text, $speaker_id, $kana=false)` | 音声合成 | string\|false |
-| `voicevox_audio_query($text, $speaker_id, $kana=false)` | AudioQuery生成 | string\|false |
-| `voicevox_synthesis($audio_query, $speaker_id, $enable_upspeak=true)` | 音声合成実行 | string\|false |
-| `voicevox_finalize()` | 終了処理 | bool |
-
-### OOPメソッド
+### OOPメソッド（推奨）
 
 **Voicevox\Engine クラス:**
 - `getInstance()` - シングルトンインスタンス取得
@@ -281,7 +275,22 @@ APIエンドポイント：
 - `finalize()` - 終了処理
 
 **Voicevox\Exception\VoicevoxException クラス:**
-- `getVoicevoxCode()` - VOICEVOX固有エラーコード取得
+- `getMessage()` - エラーメッセージ取得
+- `getCode()` - エラーコード取得
+
+### 手続き型関数（非推奨）
+
+> ⚠️ **警告**: これらの関数は非推奨で、使用時に非推奨警告が表示されます。
+
+| 関数名 | 説明 | 戻り値 |
+|--------|------|--------|
+| `voicevox_initialize($lib_path, $dict_path)` | VOICEVOX初期化 | bool |
+| `voicevox_is_initialized()` | 初期化状態確認 | bool |
+| `voicevox_get_version()` | バージョン取得 | string |
+| `voicevox_tts($text, $speaker_id, $kana=false)` | 音声合成 | string\|false |
+| `voicevox_audio_query($text, $speaker_id, $kana=false)` | AudioQuery生成 | string\|false |
+| `voicevox_synthesis($audio_query, $speaker_id, $enable_upspeak=true)` | 音声合成実行 | string\|false |
+| `voicevox_finalize()` | 終了処理 | bool |
 
 ### 定数
 
@@ -299,11 +308,14 @@ make test
 ### 個別テスト実行
 
 ```bash
-# 基本テスト
+# OOP基本テスト
 php -d extension=modules/voicevox.so test_enhanced_oop.php
 
-# 環境設定テスト
+# OOP環境設定テスト（推奨）
 php -d extension=modules/voicevox.so test_with_env.php
+
+# AudioQuery分離APIテスト（推奨）
+php -d extension=modules/voicevox.so test_separation_api.php
 
 # OOP互換性テスト
 php -d extension=modules/voicevox.so test_oop_compat.php
