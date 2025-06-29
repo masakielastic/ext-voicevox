@@ -461,8 +461,42 @@ switch ($uri) {
         break;
         
     default:
-        // 404 Not Found
-        send_error_response('Endpoint not found', 404);
+        // 静的ファイル配信（HTML, CSS, JS, etc.）
+        $file_path = __DIR__ . $uri;
+        
+        // セキュリティチェック: パストラバーサル攻撃を防ぐ
+        $real_file_path = realpath($file_path);
+        $demo_dir = realpath(__DIR__);
+        
+        if ($real_file_path && strpos($real_file_path, $demo_dir) === 0 && is_file($real_file_path)) {
+            // MIMEタイプを決定
+            $extension = strtolower(pathinfo($real_file_path, PATHINFO_EXTENSION));
+            $mime_types = [
+                'html' => 'text/html; charset=utf-8',
+                'css' => 'text/css',
+                'js' => 'application/javascript',
+                'json' => 'application/json',
+                'png' => 'image/png',
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'gif' => 'image/gif',
+                'svg' => 'image/svg+xml',
+                'ico' => 'image/x-icon'
+            ];
+            
+            $mime_type = $mime_types[$extension] ?? 'application/octet-stream';
+            
+            // ファイルを配信
+            header('Content-Type: ' . $mime_type);
+            header('Content-Length: ' . filesize($real_file_path));
+            header('Access-Control-Allow-Origin: *');
+            
+            readfile($real_file_path);
+            exit;
+        } else {
+            // 404 Not Found
+            send_error_response('Endpoint not found', 404);
+        }
 }
 
 // ここには到達しない
