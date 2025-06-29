@@ -53,8 +53,8 @@ use Voicevox\Engine;
 use Voicevox\Exception\VoicevoxException;
 
 // VOICEVOX設定（環境変数またはデフォルト値）
-define('VOICEVOX_LIB_PATH', $_ENV['VOICEVOX_LIB_PATH'] ?? '/home/masakielastic/.voicevox/squashfs-root/vv-engine/libvoicevox_core.so');
-define('VOICEVOX_DICT_PATH', $_ENV['VOICEVOX_DICT_PATH'] ?? '/home/masakielastic/.voicevox/squashfs-root/vv-engine/pyopenjtalk/open_jtalk_dic_utf_8-1.11');
+define('VOICEVOX_LIB_PATH', $_ENV['VOICEVOX_LIB_PATH'] ?? getenv('VOICEVOX_LIB_PATH') ?: '/home/masakielastic/.voicevox/squashfs-root/vv-engine/libvoicevox_core.so');
+define('VOICEVOX_DICT_PATH', $_ENV['VOICEVOX_DICT_PATH'] ?? getenv('VOICEVOX_DICT_PATH') ?: '/home/masakielastic/.voicevox/squashfs-root/vv-engine/pyopenjtalk/open_jtalk_dic_utf_8-1.11');
 
 // グローバルエンジンインスタンス
 $voicevox_engine = null;
@@ -71,6 +71,17 @@ function initialize_voicevox_engine() {
     
     if (!extension_loaded('voicevox')) {
         error_log('VOICEVOX extension not loaded');
+        return false;
+    }
+    
+    // ファイル存在チェック
+    if (!file_exists(VOICEVOX_LIB_PATH)) {
+        error_log('VOICEVOX library file not found: ' . VOICEVOX_LIB_PATH);
+        return false;
+    }
+    
+    if (!is_dir(VOICEVOX_DICT_PATH)) {
+        error_log('VOICEVOX dictionary directory not found: ' . VOICEVOX_DICT_PATH);
         return false;
     }
     
@@ -179,11 +190,11 @@ function get_post_data() {
         return json_decode($json, true);
     }
     
-    return $_POST;
+    return $_POST ?? [];
 }
 
 // CORSプリフライト対応
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type');
@@ -192,8 +203,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // ルーティング
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$method = $_SERVER['REQUEST_METHOD'];
+$uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 // 初期化確認
 try {
