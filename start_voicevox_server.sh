@@ -1,14 +1,53 @@
 #!/bin/bash
 # VOICEVOX Server Wrapper (Production Ready)
 # ファイル名: start_voicevox_server.sh
+#
+# Usage: ./start_voicevox_server.sh [PORT] [HOST]
+#   PORT: Server port number (default: 8080)
+#   HOST: Server host address (default: localhost)
+#
+# Examples:
+#   ./start_voicevox_server.sh              # Start on localhost:8080
+#   ./start_voicevox_server.sh 3000         # Start on localhost:3000
+#   ./start_voicevox_server.sh 8081 127.0.0.1 # Start on 127.0.0.1:8081
 
 set -e
+
+# ヘルプ表示
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "VOICEVOX Server Wrapper"
+    echo ""
+    echo "Usage: $0 [PORT] [HOST]"
+    echo ""
+    echo "Arguments:"
+    echo "  PORT    Server port number (default: 8080)"
+    echo "  HOST    Server host address (default: localhost)"
+    echo ""
+    echo "Examples:"
+    echo "  $0                    # Start on localhost:8080"
+    echo "  $0 3000              # Start on localhost:3000"
+    echo "  $0 8081 127.0.0.1    # Start on 127.0.0.1:8081"
+    echo ""
+    echo "Environment Variables:"
+    echo "  VOICEVOX_LIB_PATH    Path to libvoicevox_core.so"
+    echo "  VOICEVOX_DICT_PATH   Path to open_jtalk dictionary"
+    echo "  LD_LIBRARY_PATH      Will be automatically set"
+    echo ""
+    exit 0
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VOICEVOX_EXT="$SCRIPT_DIR/modules/voicevox.so"
 SERVER_SCRIPT="$SCRIPT_DIR/demo/voicevox_server.php"
 PORT=${1:-8080}
 HOST=${2:-localhost}
+
+# ポート番号の検証
+if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
+    echo "ERROR: Invalid port number '$PORT'. Must be between 1 and 65535." >&2
+    echo "Use '$0 --help' for usage information." >&2
+    exit 1
+fi
 
 # ライブラリパス設定
 export LD_LIBRARY_PATH="/home/masakielastic/.voicevox/squashfs-root/vv-engine:$LD_LIBRARY_PATH"
