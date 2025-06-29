@@ -68,6 +68,16 @@ ZEND_END_MODULE_GLOBALS(voicevox)
 #define VOICEVOX_G(v) (voicevox_globals.v)
 #endif
 
+// 共有関数ポインタ宣言（OOP実装からアクセス可能）
+extern VoicevoxResultCode (*voicevox_initialize_func)(VoicevoxInitializeOptions);
+extern VoicevoxResultCode (*voicevox_tts_func)(const char*, uint32_t, VoicevoxTtsOptions, uintptr_t*, uint8_t**);
+extern VoicevoxResultCode (*voicevox_audio_query_func)(const char*, uint32_t, VoicevoxAudioQueryOptions, char**);
+extern VoicevoxResultCode (*voicevox_synthesis_func)(const char*, uint32_t, VoicevoxSynthesisOptions, uintptr_t*, uint8_t**);
+extern void (*voicevox_finalize_func)(void);
+extern void (*voicevox_wav_free_func)(uint8_t*);
+extern void (*voicevox_json_free_func)(char*);
+extern const char* (*voicevox_get_version_func)(void);
+
 // OOP support
 #include "php_voicevox_oop.h"
 

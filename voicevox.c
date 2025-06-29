@@ -13,15 +13,15 @@
 
 ZEND_DECLARE_MODULE_GLOBALS(voicevox)
 
-// 関数ポインタ
-static VoicevoxResultCode (*voicevox_initialize_func)(VoicevoxInitializeOptions);
-static VoicevoxResultCode (*voicevox_tts_func)(const char*, uint32_t, VoicevoxTtsOptions, uintptr_t*, uint8_t**);
-static VoicevoxResultCode (*voicevox_audio_query_func)(const char*, uint32_t, VoicevoxAudioQueryOptions, char**);
-static VoicevoxResultCode (*voicevox_synthesis_func)(const char*, uint32_t, VoicevoxSynthesisOptions, uintptr_t*, uint8_t**);
-static void (*voicevox_finalize_func)(void);
-static void (*voicevox_wav_free_func)(uint8_t*);
-static void (*voicevox_json_free_func)(char*);
-static const char* (*voicevox_get_version_func)(void);
+// 関数ポインタ（OOP実装と共有）
+VoicevoxResultCode (*voicevox_initialize_func)(VoicevoxInitializeOptions);
+VoicevoxResultCode (*voicevox_tts_func)(const char*, uint32_t, VoicevoxTtsOptions, uintptr_t*, uint8_t**);
+VoicevoxResultCode (*voicevox_audio_query_func)(const char*, uint32_t, VoicevoxAudioQueryOptions, char**);
+VoicevoxResultCode (*voicevox_synthesis_func)(const char*, uint32_t, VoicevoxSynthesisOptions, uintptr_t*, uint8_t**);
+void (*voicevox_finalize_func)(void);
+void (*voicevox_wav_free_func)(uint8_t*);
+void (*voicevox_json_free_func)(char*);
+const char* (*voicevox_get_version_func)(void);
 
 // 静的フラグ
 static volatile bool voicevox_shutdown_called = false;

@@ -6,6 +6,9 @@
 #include "zend_exceptions.h"
 #include <dlfcn.h>
 
+// 外部グローバル変数の参照
+extern zend_voicevox_globals voicevox_globals;
+
 // クラスエントリ
 zend_class_entry *voicevox_engine_ce;
 zend_class_entry *voicevox_exception_ce;
@@ -127,51 +130,61 @@ PHP_METHOD(VoicevoxEngine, initialize)
         RETURN_FALSE;
     }
     
-    // 既存のvoicevox_initialize実装を利用
-    zval args[4];
-    zval func_name;
-    zval retval;
-    
-    ZVAL_STRING(&args[0], lib_path);
-    if (dict_path) {
-        ZVAL_STRING(&args[1], dict_path);
-    } else {
-        ZVAL_NULL(&args[1]);
+    // VOICEVOXライブラリの直接初期化（手続き型API非依存）
+    if (obj->is_initialized) {
+        RETURN_TRUE; // 既に初期化済み
     }
-    ZVAL_LONG(&args[2], 0); // cpu_threads
-    ZVAL_FALSE(&args[3]); // load_all
     
-    ZVAL_STRING(&func_name, "voicevox_initialize");
-    
-    // 既存関数を呼び出し
-    if (call_user_function(EG(function_table), NULL, &func_name, &retval, dict_path ? 2 : 1, args) == SUCCESS) {
-        bool result = Z_TYPE(retval) == IS_TRUE;
-        obj->is_initialized = result;
-        
-        if (result) {
-            obj->library_path = estrdup(lib_path);
-            if (dict_path) {
-                obj->dict_path = estrdup(dict_path);
-            }
+    // VOICEVOXライブラリのロード（voicevox.cの実装を参照）
+    if (!VOICEVOX_G(lib_handle)) {
+        // ライブラリロード処理はvoicevox.cと共有
+        VOICEVOX_G(lib_handle) = dlopen(lib_path, RTLD_LAZY);
+        if (!VOICEVOX_G(lib_handle)) {
+            zend_throw_exception(voicevox_exception_ce, "Failed to load VOICEVOX library", 0);
+            RETURN_FALSE;
         }
         
-        zval_ptr_dtor(&args[0]);
+        // 関数ポインタのロード
+        voicevox_initialize_func = dlsym(VOICEVOX_G(lib_handle), "voicevox_initialize");
+        voicevox_get_version_func = dlsym(VOICEVOX_G(lib_handle), "voicevox_get_version");
+        voicevox_tts_func = dlsym(VOICEVOX_G(lib_handle), "voicevox_tts");
+        voicevox_audio_query_func = dlsym(VOICEVOX_G(lib_handle), "voicevox_audio_query");
+        voicevox_synthesis_func = dlsym(VOICEVOX_G(lib_handle), "voicevox_synthesis");
+        voicevox_finalize_func = dlsym(VOICEVOX_G(lib_handle), "voicevox_finalize");
+        voicevox_wav_free_func = dlsym(VOICEVOX_G(lib_handle), "voicevox_wav_free");
+        voicevox_json_free_func = dlsym(VOICEVOX_G(lib_handle), "voicevox_json_free");
+        
+        if (!voicevox_initialize_func || !voicevox_get_version_func) {
+            dlclose(VOICEVOX_G(lib_handle));
+            VOICEVOX_G(lib_handle) = NULL;
+            zend_throw_exception(voicevox_exception_ce, "Failed to load VOICEVOX functions", 0);
+            RETURN_FALSE;
+        }
+    }
+    
+    // VOICEVOX初期化オプション構築
+    VoicevoxInitializeOptions options = {
+        .acceleration_mode = 0, // AUTO
+        .cpu_num_threads = 0,
+        .load_all_models = false,
+        .open_jtalk_dict_dir = dict_path
+    };
+    
+    // VOICEVOXライブラリ初期化
+    VoicevoxResultCode result = voicevox_initialize_func(options);
+    
+    if (result == 0) { // VOICEVOX_RESULT_OK
+        obj->is_initialized = true;
+        obj->library_path = estrdup(lib_path);
         if (dict_path) {
-            zval_ptr_dtor(&args[1]);
+            obj->dict_path = estrdup(dict_path);
         }
-        zval_ptr_dtor(&func_name);
-        zval_ptr_dtor(&retval);
-        
-        RETURN_BOOL(result);
+        VOICEVOX_G(is_initialized) = true; // グローバル状態も更新
+        RETURN_TRUE;
+    } else {
+        zend_throw_exception_ex(voicevox_exception_ce, result, "VOICEVOX initialization failed with code %d", result);
+        RETURN_FALSE;
     }
-    
-    zval_ptr_dtor(&args[0]);
-    if (dict_path) {
-        zval_ptr_dtor(&args[1]);
-    }
-    zval_ptr_dtor(&func_name);
-    
-    RETURN_FALSE;
 }
 
 // 初期化状態確認メソッド
@@ -184,17 +197,14 @@ PHP_METHOD(VoicevoxEngine, isInitialized)
 // バージョン取得メソッド
 PHP_METHOD(VoicevoxEngine, getVersion)
 {
-    zval func_name;
-    zval retval;
-    
-    ZVAL_STRING(&func_name, "voicevox_get_version");
-    
-    if (call_user_function(EG(function_table), NULL, &func_name, &retval, 0, NULL) == SUCCESS) {
-        zval_ptr_dtor(&func_name);
-        RETURN_ZVAL(&retval, 1, 1);
+    // VOICEVOXライブラリの直接呼び出し（手続き型API非依存）
+    if (voicevox_get_version_func) {
+        const char* version = voicevox_get_version_func();
+        if (version) {
+            RETURN_STRING(version);
+        }
     }
     
-    zval_ptr_dtor(&func_name);
     RETURN_STRING("");
 }
 
@@ -345,22 +355,14 @@ PHP_METHOD(VoicevoxEngine, finalize)
         RETURN_TRUE;
     }
     
-    zval func_name;
-    zval retval;
-    
-    ZVAL_STRING(&func_name, "voicevox_finalize");
-    
-    if (call_user_function(EG(function_table), NULL, &func_name, &retval, 0, NULL) == SUCCESS) {
-        bool result = Z_TYPE(retval) == IS_TRUE;
-        if (result) {
-            obj->is_initialized = false;
-        }
-        zval_ptr_dtor(&func_name);
-        zval_ptr_dtor(&retval);
-        RETURN_BOOL(result);
+    // VOICEVOXライブラリの直接呼び出し（手続き型API非依存）
+    if (voicevox_finalize_func) {
+        voicevox_finalize_func();
+        obj->is_initialized = false;
+        VOICEVOX_G(is_initialized) = false; // グローバル状態も更新
+        RETURN_TRUE;
     }
     
-    zval_ptr_dtor(&func_name);
     RETURN_FALSE;
 }
 

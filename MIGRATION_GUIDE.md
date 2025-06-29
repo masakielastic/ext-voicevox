@@ -427,12 +427,23 @@ try {
 ?>
 ```
 
+## 実装例
+
+### デモアプリケーション
+プロジェクトには移行完了済みのデモアプリケーションが含まれています：
+
+- **demo/voicevox_server.php** - 完全なOOP API実装例
+- **demo/new_server.php** - 高度なOOP API実装例
+
+両方のファイルはOOP APIのベストプラクティスを示しており、移行の参考として活用できます。
+
 ## サポート
 
 ### ドキュメント
 - [PROCEDURAL_API_REMOVAL_PLAN.md](PROCEDURAL_API_REMOVAL_PLAN.md) - 削除計画の詳細
 - [CLAUDE.md](CLAUDE.md) - 開発者向けガイド
 - [README.md](README.md) - 基本的な使用方法
+- [demo/voicevox_server.php](demo/voicevox_server.php) - 実装例
 
 ### 問題報告
 移行で問題が発生した場合は、以下の情報と共にissueを作成してください：

@@ -36,6 +36,8 @@ php -d extension=modules/voicevox.so -S localhost:8080 demo/voicevox_server.php
 
 # Start alternate OOP server
 php -d extension=modules/voicevox.so -S localhost:8081 demo/new_server.php
+
+# Both servers are 100% OOP API compliant and serve as migration examples
 ```
 
 ## Architecture
