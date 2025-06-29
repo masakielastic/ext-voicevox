@@ -47,9 +47,11 @@ The extension primarily uses Object-Oriented API with legacy procedural support:
    - `\Voicevox\Engine::getInstance()->initialize()`, `->tts()`, `->finalize()`, etc.
    - Exception handling with `\Voicevox\Exception\VoicevoxException`
    
-2. **Procedural API** (`voicevox.c`): **DEPRECATED** - Legacy interface for backward compatibility
-   - `Voicevox\Engine` class with singleton pattern
-   - `Voicevox\Exception\VoicevoxException` for error handling
+2. **Procedural API** (`voicevox.c`): **DEPRECATED - SCHEDULED FOR REMOVAL**
+   - ⚠️ **Removal Timeline**: Version 1.0.0 (3 months from 2025-06-29)
+   - Legacy interface maintained for backward compatibility only
+   - All new development should use OOP API
+   - See `PROCEDURAL_API_REMOVAL_PLAN.md` for migration details
 
 ### Key Components
 - **Dynamic Library Loading**: Uses `dlopen()` to load VOICEVOX shared library at runtime
@@ -108,9 +110,11 @@ try {
 }
 ```
 
-#### Procedural Usage (DEPRECATED)
+#### Procedural Usage (DEPRECATED - REMOVAL SCHEDULED)
 ```php
-// WARNING: These functions are deprecated and will show deprecation warnings
+// WARNING: These functions are deprecated and will be REMOVED in v1.0.0
+// Scheduled for removal: 3 months from 2025-06-29
+// Use OOP API instead: \Voicevox\Engine::getInstance()
 voicevox_initialize($lib_path, $dict_path);
 $wav_data = voicevox_tts("Hello World", 3);
 voicevox_finalize();

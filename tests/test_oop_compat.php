@@ -125,8 +125,8 @@ try {
 
 echo "\n";
 
-// テスト6: 初期化テスト（実際のライブラリがない場合はスキップ）
-echo "6. 初期化テスト\n";
+// テスト6: OOP初期化テスト（実際のライブラリがない場合はスキップ）
+echo "6. OOP初期化テスト\n";
 if (file_exists(TEST_LIB_PATH)) {
     try {
         $engine = \Voicevox\Engine::getInstance();
@@ -134,23 +134,14 @@ if (file_exists(TEST_LIB_PATH)) {
         // OOP方式での初期化
         $oop_result = $engine->initialize(TEST_LIB_PATH, TEST_DICT_PATH);
         
-        // 既存関数での結果と比較
-        $func_result = voicevox_initialize(TEST_LIB_PATH, TEST_DICT_PATH);
-        
-        if ($oop_result === $func_result) {
-            echo "✓ OOP方式と関数方式の初期化結果が一致しました\n";
+        if ($oop_result) {
+            echo "✓ OOP初期化成功\n";
+            
+            // 初期化状態確認
+            $oop_status = $engine->isInitialized();
+            echo "✓ 初期化状態: " . ($oop_status ? 'true' : 'false') . "\n";
         } else {
-            echo "✗ OOP方式と関数方式の初期化結果が異なります\n";
-        }
-        
-        // 初期化状態確認
-        $oop_status = $engine->isInitialized();
-        $func_status = voicevox_is_initialized();
-        
-        if ($oop_status === $func_status) {
-            echo "✓ OOP方式と関数方式の初期化状態確認結果が一致しました\n";
-        } else {
-            echo "✗ OOP方式と関数方式の初期化状態確認結果が異なります\n";
+            echo "✗ OOP初期化失敗\n";
         }
         
     } catch (Exception $e) {

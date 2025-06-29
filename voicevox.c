@@ -143,7 +143,9 @@ PHP_FUNCTION(voicevox_initialize)
 {
     // 非推奨警告を発出
     php_error_docref(NULL, E_DEPRECATED, 
-        "voicevox_initialize() is deprecated, use Voicevox\\Engine::getInstance()->initialize() instead");
+        "voicevox_initialize() is deprecated and will be REMOVED in v1.0.0 (scheduled: 2025-09-29). "
+        "Use Voicevox\\Engine::getInstance()->initialize() instead. "
+        "See PROCEDURAL_API_REMOVAL_PLAN.md for migration guide.");
     
     char *lib_path = NULL, *dict_path = NULL;
     size_t lib_path_len = 0, dict_path_len = 0;
@@ -204,7 +206,9 @@ PHP_FUNCTION(voicevox_finalize)
 {
     // 非推奨警告を発出
     php_error_docref(NULL, E_DEPRECATED, 
-        "voicevox_finalize() is deprecated, use Voicevox\\Engine::getInstance()->finalize() instead");
+        "voicevox_finalize() is deprecated and will be REMOVED in v1.0.0 (scheduled: 2025-09-29). "
+        "Use Voicevox\\Engine::getInstance()->finalize() instead. "
+        "See PROCEDURAL_API_REMOVAL_PLAN.md for migration guide.");
     if (zend_parse_parameters_none() == FAILURE) {
         RETURN_FALSE;
     }
@@ -228,7 +232,9 @@ PHP_FUNCTION(voicevox_get_version)
 {
     // 非推奨警告を発出
     php_error_docref(NULL, E_DEPRECATED, 
-        "voicevox_get_version() is deprecated, use Voicevox\\Engine::getInstance()->getVersion() instead");
+        "voicevox_get_version() is deprecated and will be REMOVED in v1.0.0 (scheduled: 2025-09-29). "
+        "Use Voicevox\\Engine::getInstance()->getVersion() instead. "
+        "See PROCEDURAL_API_REMOVAL_PLAN.md for migration guide.");
     if (zend_parse_parameters_none() == FAILURE) {
         RETURN_FALSE;
     }
@@ -251,7 +257,9 @@ PHP_FUNCTION(voicevox_tts)
 {
     // 非推奨警告を発出
     php_error_docref(NULL, E_DEPRECATED, 
-        "voicevox_tts() is deprecated, use Voicevox\\Engine::getInstance()->tts() instead");
+        "voicevox_tts() is deprecated and will be REMOVED in v1.0.0 (scheduled: 2025-09-29). "
+        "Use Voicevox\\Engine::getInstance()->tts() instead. "
+        "See PROCEDURAL_API_REMOVAL_PLAN.md for migration guide.");
     char *text;
     size_t text_len;
     zend_long speaker_id = 3;
@@ -299,7 +307,9 @@ PHP_FUNCTION(voicevox_audio_query)
 {
     // 非推奨警告を発出
     php_error_docref(NULL, E_DEPRECATED, 
-        "voicevox_audio_query() is deprecated, use Voicevox\\Engine::getInstance()->audioQuery() instead");
+        "voicevox_audio_query() is deprecated and will be REMOVED in v1.0.0 (scheduled: 2025-09-29). "
+        "Use Voicevox\\Engine::getInstance()->audioQuery() instead. "
+        "See PROCEDURAL_API_REMOVAL_PLAN.md for migration guide.");
     char *text;
     size_t text_len;
     zend_long speaker_id = 3;
@@ -347,7 +357,9 @@ PHP_FUNCTION(voicevox_synthesis)
 {
     // 非推奨警告を発出
     php_error_docref(NULL, E_DEPRECATED, 
-        "voicevox_synthesis() is deprecated, use Voicevox\\Engine::getInstance()->synthesis() instead");
+        "voicevox_synthesis() is deprecated and will be REMOVED in v1.0.0 (scheduled: 2025-09-29). "
+        "Use Voicevox\\Engine::getInstance()->synthesis() instead. "
+        "See PROCEDURAL_API_REMOVAL_PLAN.md for migration guide.");
     char *audio_query_json;
     size_t json_len;
     zend_long speaker_id = 3;
@@ -398,7 +410,9 @@ PHP_FUNCTION(voicevox_is_initialized)
 {
     // 非推奨警告を発出
     php_error_docref(NULL, E_DEPRECATED, 
-        "voicevox_is_initialized() is deprecated, use Voicevox\\Engine::getInstance()->isInitialized() instead");
+        "voicevox_is_initialized() is deprecated and will be REMOVED in v1.0.0 (scheduled: 2025-09-29). "
+        "Use Voicevox\\Engine::getInstance()->isInitialized() instead. "
+        "See PROCEDURAL_API_REMOVAL_PLAN.md for migration guide.");
     if (zend_parse_parameters_none() == FAILURE) {
         RETURN_FALSE;
     }

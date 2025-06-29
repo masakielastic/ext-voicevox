@@ -1,6 +1,10 @@
 # VOICEVOX PHP Extension
 
-VOICEVOX音声合成エンジンのPHP拡張機能です。モダンなオブジェクト指向APIを中心とした設計で、例外処理による堅牢なエラーハンドリングを提供します。従来の手続き型APIも後方互換性のためサポートしていますが、新しい開発にはOOP APIの使用を強く推奨します。
+VOICEVOX音声合成エンジンのPHP拡張機能です。モダンなオブジェクト指向APIを中心とした設計で、例外処理による堅牢なエラーハンドリングを提供します。
+
+> ⚠️ **重要なお知らせ**: 手続き型API（`voicevox_*` 関数）は **2025年9月末に削除予定** です。
+> 新しい開発には必ずOOP API（`\Voicevox\Engine`）をご使用ください。
+> 詳細は [`PROCEDURAL_API_REMOVAL_PLAN.md`](PROCEDURAL_API_REMOVAL_PLAN.md) をご確認ください。
 
 ## 必要な環境
 

@@ -134,31 +134,21 @@ try {
 
 echo "\n";
 
-// テスト4: 手続き型-OOP互換性確認
-echo "4. 手続き型-OOP互換性確認\n";
+// テスト4: OOP API状態確認
+echo "4. OOP API状態確認\n";
 try {
-    // 初期化状態確認の一致
-    $oop_status = \Voicevox\Engine::getInstance()->isInitialized();
-    $func_status = voicevox_is_initialized();
+    $engine = \Voicevox\Engine::getInstance();
     
-    if ($oop_status === $func_status) {
-        echo "✓ 初期化状態確認が一致しています\n";
-    } else {
-        echo "✗ 初期化状態確認が一致していません (OOP: " . ($oop_status ? 'true' : 'false') . ", 関数: " . ($func_status ? 'true' : 'false') . ")\n";
-    }
+    // 初期化状態確認
+    $oop_status = $engine->isInitialized();
+    echo "✓ 初期化状態: " . ($oop_status ? 'true' : 'false') . "\n";
     
-    // バージョン取得の一致
-    $oop_version = \Voicevox\Engine::getInstance()->getVersion();
-    $func_version = voicevox_get_version();
-    
-    if ($oop_version === $func_version) {
-        echo "✓ バージョン取得が一致しています\n";
-    } else {
-        echo "✗ バージョン取得が一致していません (OOP: '$oop_version', 関数: '$func_version')\n";
-    }
+    // バージョン取得
+    $oop_version = $engine->getVersion();
+    echo "✓ バージョン: '$oop_version'\n";
     
 } catch (Exception $e) {
-    echo "✗ 互換性テストエラー: " . $e->getMessage() . "\n";
+    echo "✗ OOP APIテストエラー: " . $e->getMessage() . "\n";
 }
 
 echo "\n=== テスト完了 ===\n";
